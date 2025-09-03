@@ -11,16 +11,9 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 rounded-full overflow-hidden shadow-lg">
-              <img 
-                src="/pics/logo1.png" 
-                alt="The HIVE Logo" 
-                className="w-full h-full object-cover"
-              />
-            </div>
             <div>
-              <h1 className="text-white font-bold text-xl">The HIVE</h1>
-              <p className="premium-text text-xs">Speaking Club</p>
+              <h1 className="text-white font-bold text-xl">NASR APP</h1>
+              <p className="premium-text text-xs">Real-time Translation</p>
             </div>
           </div>
 
@@ -36,15 +29,13 @@ const Navbar = () => {
               to="/offer-for-you" 
               className={`transition-colors ${location.pathname === '/offer-for-you' ? 'text-yellow-400' : 'text-white hover:text-yellow-400'}`}
             >
-              Offer for You
+              About Us
             </Link>
             <a 
-              href="https://docs.google.com/forms/d/e/1FAIpQLSf2VuR-BR-i3TWiM1E8ePIPlGjMVWy3bthaUTKx8N29YtVRBw/viewform" 
-              target="_blank" 
-              rel="noopener noreferrer"
+              href="#contact" 
               className="btn-primary"
             >
-              Join Now
+              Try NASR APP
             </a>
           </div>
 
@@ -79,15 +70,13 @@ const Navbar = () => {
                 className={`block px-3 py-2 transition-colors ${location.pathname === '/offer-for-you' ? 'text-yellow-400' : 'text-white hover:text-yellow-400'}`}
                 onClick={() => setIsMenuOpen(false)}
               >
-                Offer for You
+                About Us
               </Link>
               <a 
-                href="https://docs.google.com/forms/d/e/1FAIpQLSf2VuR-BR-i3TWiM1E8ePIPlGjMVWy3bthaUTKx8N29YtVRBw/viewform" 
-                target="_blank" 
-                rel="noopener noreferrer"
+                href="#contact" 
                 className="block px-3 py-2 btn-primary text-center"
               >
-                Join Now
+                Try NASR APP
               </a>
             </div>
           </div>

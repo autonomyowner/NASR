@@ -1,24 +1,26 @@
 const Locations = () => {
-  const locations = [
+  const platforms = [
     {
-      city: "Algiers Centre",
+      platform: "Web Application",
       status: "Active",
-      schedules: [
-        { time: "Saturday 1:00 PM - 3:00 PM", available: true },
-        { time: "Saturday 3:30 PM - 5:30 PM", available: true }
+      features: [
+        { feature: "Real-time translation", available: true },
+        { feature: "Voice communication", available: true },
+        { feature: "Text chat", available: true }
       ],
-      mapUrl: "https://maps.app.goo.gl/umc16T5RYNvepSnf8?g%5Fst=com.google.maps.preview.copy",
-      description: "Our flagship location in the heart of Algiers, offering convenient access and modern facilities."
+      url: "#",
+      description: "Our primary web-based platform accessible from any modern browser."
     },
     {
-      city: "Tlemcen",
-      status: "Coming Soon",
-      schedules: [
-        { time: "Saturday 1:00 PM - 3:30 PM", available: false },
-        { time: "Saturday 4:00 PM - 6:30 PM", available: false }
+      platform: "Mobile App",
+      status: "In Development",
+      features: [
+        { feature: "iOS version", available: false },
+        { feature: "Android version", available: false },
+        { feature: "Offline capabilities", available: false }
       ],
-      mapUrl: "https://maps.app.goo.gl/3Bt7sB3oSzWXjSWf7?g%5Fst=ic",
-      description: "Expanding to Tlemcen to serve our growing community in western Algeria."
+      url: "#",
+      description: "Native mobile applications for iOS and Android platforms."
     }
   ]
 
@@ -27,54 +29,54 @@ const Locations = () => {
       <div className="container-custom">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Our <span className="premium-text">Locations</span>
+            Platform <span className="premium-text">Availability</span>
           </h2>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            Join us at our convenient locations across Algeria. More locations coming soon!
+            NASR APP is designed to be accessible across multiple platforms, ensuring you can communicate from anywhere, anytime.
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-8">
-          {locations.map((location, index) => (
+          {platforms.map((platform, index) => (
             <div key={index} className="premium-card p-8 hover:transform hover:scale-105">
               {/* Header */}
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-bold text-white">{location.city}</h3>
+                <h3 className="text-2xl font-bold text-white">{platform.platform}</h3>
                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  location.status === "Active" 
+                  platform.status === "Active" 
                     ? "bg-green-500/20 text-green-400 border border-green-400/30"
                     : "bg-yellow-500/20 text-yellow-400 border border-yellow-400/30"
                 }`}>
-                  {location.status}
+                  {platform.status}
                 </span>
               </div>
 
               {/* Description */}
               <p className="text-gray-300 mb-6 leading-relaxed">
-                {location.description}
+                {platform.description}
               </p>
 
               {/* Schedules */}
               <div className="mb-6">
-                <h4 className="text-lg font-semibold text-white mb-3">Available Sessions:</h4>
+                <h4 className="text-lg font-semibold text-white mb-3">Features:</h4>
                 <div className="space-y-2">
-                  {location.schedules.map((schedule, scheduleIndex) => (
-                    <div key={scheduleIndex} className={`flex items-center justify-between p-3 rounded-lg ${
-                      schedule.available 
+                  {platform.features.map((feature, featureIndex) => (
+                    <div key={featureIndex} className={`flex items-center justify-between p-3 rounded-lg ${
+                      feature.available 
                         ? "bg-green-500/10 border border-green-400/20" 
                         : "bg-gray-500/10 border border-gray-400/20"
                     }`}>
                       <span className={`text-sm ${
-                        schedule.available ? "text-green-400" : "text-gray-400"
+                        feature.available ? "text-green-400" : "text-gray-400"
                       }`}>
-                        {schedule.time}
+                        {feature.feature}
                       </span>
                       <span className={`text-xs px-2 py-1 rounded ${
-                        schedule.available 
+                        feature.available 
                           ? "bg-green-500/20 text-green-400" 
                           : "bg-gray-500/20 text-gray-400"
                       }`}>
-                        {schedule.available ? "Available" : "Coming Soon"}
+                        {feature.available ? "Available" : "Coming Soon"}
                       </span>
                     </div>
                   ))}
@@ -83,13 +85,11 @@ const Locations = () => {
 
               {/* Map Link */}
               <a 
-                href={location.mapUrl}
-                target="_blank"
-                rel="noopener noreferrer"
+                href={platform.url}
                 className="inline-flex items-center premium-text hover:text-yellow-300 transition-colors"
               >
-                <span className="mr-2">📍</span>
-                View on Google Maps
+                <span className="mr-2"></span>
+                {platform.status === "Active" ? "Access Platform" : "Learn More"}
                 <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
@@ -101,18 +101,15 @@ const Locations = () => {
         {/* Additional Info */}
         <div className="mt-12 premium-card p-8">
           <div className="text-center">
-            <h3 className="text-2xl font-bold text-white mb-4">Ready to Join?</h3>
+            <h3 className="text-2xl font-bold text-white mb-4">Future Platforms</h3>
             <p className="text-gray-300 mb-6">
-              Choose your preferred location and time slot when registering. 
-              We'll send you a confirmation email with all the details.
+              We're working on expanding NASR APP to more platforms and devices to ensure maximum accessibility.
             </p>
             <a 
-              href="https://docs.google.com/forms/d/e/1FAIpQLSf2VuR-BR-i3TWiM1E8ePIPlGjMVWy3bthaUTKx8N29YtVRBw/viewform" 
-              target="_blank" 
-              rel="noopener noreferrer"
+              href="#contact" 
               className="btn-primary"
             >
-              Register Now
+              Stay Updated
             </a>
           </div>
         </div>

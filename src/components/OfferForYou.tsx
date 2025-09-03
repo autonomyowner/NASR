@@ -1,21 +1,6 @@
 const OfferForYou = () => {
   return (
-    <section className="min-h-screen flex items-center justify-center relative overflow-hidden">
-      {/* Video Background */}
-      <div className="absolute inset-0 z-0">
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="w-full h-full object-cover transform scale-x-[-1] rotate-45"
-        >
-          <source src="/pics/fliphero.mp4" type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
-        {/* Video overlay for better text readability */}
-        <div className="absolute inset-0 bg-black/50"></div>
-      </div>
+    <section className="min-h-screen flex items-center justify-center relative overflow-hidden glass-effect section-padding">
 
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-10 z-5">
@@ -28,69 +13,69 @@ const OfferForYou = () => {
         <div className="max-w-6xl mx-auto">
           {/* Badge */}
           <div className="inline-flex items-center px-4 py-2 glass-effect border border-yellow-500/30 rounded-full premium-text text-sm font-medium mb-8">
-            <span className="mr-2">🚀</span>
-            Exclusive Business Opportunity for Billel Madani
+            <span className="mr-2"></span>
+            Live Demo Available
           </div>
 
           {/* Main Heading */}
           <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-            Billel Madani
-            <span className="block premium-text">Scale Your Empire</span>
+            Experience Real-Time
+            <span className="block premium-text">Translation</span>
           </h1>
 
           {/* Subtitle */}
           <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-4xl mx-auto leading-relaxed">
-            Transform The HIVE from a local speaking club into a 50M DA/year digital empire. 
-            We've identified the exact bottleneck holding you back from 10x growth.
+            See how NASR APP breaks language barriers in seconds, enabling seamless communication 
+            between people speaking different languages anywhere in the world.
           </p>
 
           {/* Pain Point Section */}
           <div className="bg-red-900/20 border border-red-500/30 rounded-3xl p-8 mb-12">
-            <h2 className="text-3xl font-bold text-white mb-6">The Problem You're Facing</h2>
+            <h2 className="text-3xl font-bold text-white mb-6">Global Communication Challenges</h2>
             <div className="grid md:grid-cols-2 gap-6 text-left">
               <div className="space-y-4">
                 <div className="flex items-start space-x-4">
-                  <div className="text-red-400 text-xl">❌</div>
+                  <div className="text-red-400 text-xl"></div>
                   <div>
-                    <h4 className="text-white font-semibold">Geographic Limitation</h4>
-                    <p className="text-gray-300 text-sm">You're capped by physical location capacity. Only so many people can attend in-person sessions.</p>
+                    <h4 className="text-white font-semibold">Language Barriers</h4>
+                    <p className="text-gray-300 text-sm">Millions of meaningful conversations are lost daily due to language differences, limiting global opportunities and connections.</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-4">
-                  <div className="text-red-400 text-xl">❌</div>
+                  <div className="text-red-400 text-xl"></div>
                   <div>
-                    <h4 className="text-white font-semibold">Intimidation Barrier</h4>
-                    <p className="text-gray-300 text-sm">70% of your 500K followers are too intimidated by public speaking to join in-person.</p>
+                    <h4 className="text-white font-semibold">Miscommunication Costs</h4>
+                    <p className="text-gray-300 text-sm">International businesses lose billions annually due to translation errors and cultural misunderstandings in global communications.</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-4">
-                  <div className="text-red-400 text-xl">❌</div>
+                  <div className="text-red-400 text-xl"></div>
                   <div>
-                    <h4 className="text-white font-semibold">Revenue Ceiling</h4>
-                    <p className="text-gray-300 text-sm">You're leaving millions on the table by not monetizing your massive online audience.</p>
+                    <h4 className="text-white font-semibold">Travel Communication</h4>
+                    <p className="text-gray-300 text-sm">Travelers struggle with basic communication, limiting authentic cultural experiences and creating barriers to exploration.</p>
                   </div>
                 </div>
               </div>
               <div className="space-y-4">
                 <div className="flex items-start space-x-4">
-                  <div className="text-red-400 text-xl">❌</div>
+                  <div className="text-red-400 text-xl"></div>
                   <div>
-                    <h4 className="text-white font-semibold">Time Constraints</h4>
-                    <p className="text-gray-300 text-sm">You can only be in one place at one time. Your impact is limited by your physical presence.</p>
+                    <h4 className="text-white font-semibold">Educational Gaps</h4>
+                    <p className="text-gray-300 text-sm">Language learning takes years, preventing immediate communication needs and limiting access to global education resources.</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-4">
-                  <div className="text-red-400 text-xl">❌</div>
+                  <div className="text-red-400 text-xl"></div>
                   <div>
-                    <h4 className="text-white font-semibold">Scalability Issues</h4>
-                    <p className="text-gray-300 text-sm">Growing physical locations requires massive capital and operational complexity.</p>
+                    <h4 className="text-white font-semibold">Social Isolation</h4>
+                    <p className="text-gray-300 text-sm">Language differences create social barriers, preventing immigrants and expats from fully integrating into new communities.</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-4">
-                  <div className="text-red-400 text-xl">❌</div>
+                  <div className="text-red-400 text-xl"></div>
                   <div>
-                    <h4 className="text-white font-semibold">Competition Risk</h4>
-                    <p className="text-gray-300 text-sm">Someone else will solve this problem and capture your market if you don't act now.</p>
+                    <h4 className="text-white font-semibold">Cultural Exchange Loss</h4>
+                    <p className="text-gray-300 text-sm">Rich cultural exchanges and global friendships are missed due to the inability to communicate across languages naturally.</p>
                   </div>
                 </div>
               </div>
@@ -99,51 +84,51 @@ const OfferForYou = () => {
 
           {/* Solution Section */}
           <div className="bg-green-900/20 border border-green-500/30 rounded-3xl p-8 mb-12">
-            <h2 className="text-3xl font-bold text-white mb-6">The Solution: Digital Transformation</h2>
+            <h2 className="text-3xl font-bold text-white mb-6">The Solution: NASR APP Innovation</h2>
             <div className="grid md:grid-cols-2 gap-6 text-left">
               <div className="space-y-4">
                 <div className="flex items-start space-x-4">
-                  <div className="text-green-400 text-xl">✅</div>
+                  <div className="text-green-400 text-xl"></div>
                   <div>
-                    <h4 className="text-white font-semibold">Global Reach</h4>
-                    <p className="text-gray-300 text-sm">Tap into your 500K followers worldwide. No geographic limitations.</p>
+                    <h4 className="text-white font-semibold">Real-Time Voice Translation</h4>
+                    <p className="text-gray-300 text-sm">Speak naturally in your language and hear responses instantly in the listener's native language with &lt;3 second latency.</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-4">
-                  <div className="text-green-400 text-xl">✅</div>
+                  <div className="text-green-400 text-xl"></div>
                   <div>
-                    <h4 className="text-white font-semibold">Reduced Intimidation</h4>
-                    <p className="text-gray-300 text-sm">Online environment makes public speaking less intimidating for beginners.</p>
+                    <h4 className="text-white font-semibold">Context-Aware Conversations</h4>
+                    <p className="text-gray-300 text-sm">Advanced AI understands context, idioms, and cultural nuances for natural, meaningful conversations across languages.</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-4">
-                  <div className="text-green-400 text-xl">✅</div>
+                  <div className="text-green-400 text-xl"></div>
                   <div>
-                    <h4 className="text-white font-semibold">Automated Revenue</h4>
-                    <p className="text-gray-300 text-sm">Recurring monthly subscriptions create predictable, scalable income.</p>
+                    <h4 className="text-white font-semibold">Cultural Nuance Preservation</h4>
+                    <p className="text-gray-300 text-sm">Maintains emotional tone, cultural context, and meaning beyond literal translation for authentic communication.</p>
                   </div>
                 </div>
               </div>
               <div className="space-y-4">
                 <div className="flex items-start space-x-4">
-                  <div className="text-green-400 text-xl">✅</div>
+                  <div className="text-green-400 text-xl"></div>
                   <div>
-                    <h4 className="text-white font-semibold">24/7 Availability</h4>
-                    <p className="text-gray-300 text-sm">Your brand works for you even when you're sleeping.</p>
+                    <h4 className="text-white font-semibold">Seamless User Experience</h4>
+                    <p className="text-gray-300 text-sm">Intuitive interface requires no learning curve - just speak naturally and experience instant, fluid communication.</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-4">
-                  <div className="text-green-400 text-xl">✅</div>
+                  <div className="text-green-400 text-xl"></div>
                   <div>
-                    <h4 className="text-white font-semibold">Data-Driven Growth</h4>
-                    <p className="text-gray-300 text-sm">Track user behavior and optimize for maximum conversion.</p>
+                    <h4 className="text-white font-semibold">Multi-Platform Accessibility</h4>
+                    <p className="text-gray-300 text-sm">Available on web, mobile, and desktop - communicate anywhere, anytime without platform limitations.</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-4">
-                  <div className="text-green-400 text-xl">✅</div>
+                  <div className="text-green-400 text-xl"></div>
                   <div>
-                    <h4 className="text-white font-semibold">Partnership Opportunities</h4>
-                    <p className="text-gray-300 text-sm">Collaborate with English schools, brands, and educational institutions.</p>
+                    <h4 className="text-white font-semibold">Privacy-Focused Design</h4>
+                    <p className="text-gray-300 text-sm">End-to-end encryption ensures your conversations remain private while enabling breakthrough translation technology.</p>
                   </div>
                 </div>
               </div>
@@ -152,71 +137,71 @@ const OfferForYou = () => {
 
           {/* Revenue Projection */}
           <div className="bg-slate-800/30 backdrop-blur-md border border-yellow-500/30 rounded-3xl p-8 mb-12">
-            <h2 className="text-3xl font-bold text-white text-center mb-8">Revenue Projection: The Numbers</h2>
+            <h2 className="text-3xl font-bold text-white text-center mb-8">Performance Metrics: The Technology</h2>
             <div className="grid md:grid-cols-3 gap-8">
               <div className="text-center">
-                <div className="text-4xl font-bold premium-text mb-2">500K</div>
-                <div className="text-gray-400">Instagram Followers</div>
+                <div className="text-4xl font-bold premium-text mb-2">&lt;3s</div>
+                <div className="text-gray-400">Translation Latency</div>
               </div>
               <div className="text-center">
-                <div className="text-4xl font-bold premium-text mb-2">5%</div>
-                <div className="text-gray-400">Conservative Conversion Rate</div>
+                <div className="text-4xl font-bold premium-text mb-2">&gt;95%</div>
+                <div className="text-gray-400">Accuracy Rate</div>
               </div>
               <div className="text-center">
-                <div className="text-4xl font-bold premium-text mb-2">25K</div>
-                <div className="text-gray-400">Potential Subscribers</div>
+                <div className="text-4xl font-bold premium-text mb-2">50+</div>
+                <div className="text-gray-400">Supported Languages</div>
               </div>
             </div>
             <div className="mt-8 p-6 bg-yellow-500/10 border border-yellow-500/30 rounded-2xl">
               <div className="text-center">
-                <div className="text-5xl font-bold premium-text mb-2">600M DA</div>
-                <div className="text-gray-300 text-lg">Annual Revenue Potential</div>
-                <div className="text-gray-400 text-sm mt-2">(25K subscribers × 2000 DA/month × 12 months)</div>
+                <div className="text-5xl font-bold premium-text mb-2">Real-Time</div>
+                <div className="text-gray-300 text-lg">Processing Speed</div>
+                <div className="text-gray-400 text-sm mt-2">Instant communication without delays or interruptions</div>
               </div>
             </div>
           </div>
 
           {/* Our Offer */}
           <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 rounded-3xl p-8 mb-12">
-            <h2 className="text-3xl font-bold text-white text-center mb-8">What We're Offering You</h2>
+            <h2 className="text-3xl font-bold text-white text-center mb-8">What NASR APP Delivers</h2>
             <div className="grid md:grid-cols-2 gap-8">
               <div className="space-y-6">
                 <div className="premium-card p-6">
-                  <h3 className="text-2xl font-bold text-white mb-4">🎯 Complete SaaS Platform</h3>
+                  <h3 className="text-2xl font-bold text-white mb-4">Real-Time Translation Engine</h3>
                   <ul className="text-gray-300 space-y-2">
-                    <li>• Modern subscription management system</li>
-                    <li>• Automated payment processing with Baridimob</li>
-                    <li>• User dashboard and progress tracking</li>
-                    <li>• Mobile-responsive design</li>
+                    <li>• Neural machine translation technology</li>
+                    <li>• Advanced speech recognition system</li>
+                    <li>• Natural language processing algorithms</li>
+                    <li>• Cloud-based processing infrastructure</li>
                   </ul>
                 </div>
                 <div className="premium-card p-6">
-                  <h3 className="text-2xl font-bold text-white mb-4">🎤 Discord Community Setup</h3>
+                  <h3 className="text-2xl font-bold text-white mb-4">Voice Communication Hub</h3>
                   <ul className="text-gray-300 space-y-2">
-                    <li>• Private Discord server with role management</li>
-                    <li>• Automated onboarding system</li>
-                    <li>• Integration with your existing brand</li>
-                    <li>• Moderation tools and analytics</li>
+                    <li>• High-quality voice input processing</li>
+                    <li>• Natural text-to-speech synthesis</li>
+                    <li>• Noise cancellation and audio optimization</li>
+                    <li>• Multiple accent and dialect support</li>
                   </ul>
                 </div>
               </div>
               <div className="space-y-6">
                 <div className="premium-card p-6">
-                  <h3 className="text-2xl font-bold text-white mb-4">📈 Marketing Strategy</h3>
+                  <h3 className="text-2xl font-bold text-white mb-4">Text Chat Integration</h3>
                   <ul className="text-gray-300 space-y-2">
-                    <li>• Conversion-optimized landing pages</li>
-                    <li>• Email marketing automation</li>
-                    <li>• Social media campaign strategy</li>
-                    <li>• Partnership outreach framework</li>
+                    <li>• Real-time text translation</li>
+                    <li>• Conversation history and context</li>
+                    <li>• Emoji and media translation support</li>
+                    <li>• Cross-platform synchronization</li>
                   </ul>
                 </div>
                 <div className="premium-card p-6">
-                  <h3 className="text-2xl font-bold text-white mb-4">🚀 Launch Support</h3>
+                  <h3 className="text-2xl font-bold text-white mb-4">Multi-Language Support</h3>
                   <ul className="text-gray-300 space-y-2">
-                    <li>• 3 months of technical support</li>
-                    <li>• Performance optimization</li>
-                    <li>• Analytics and reporting setup</li>
-                    <li>• Training for your team</li>
+                    <li>• 50+ supported languages and growing</li>
+                    <li>• Regional dialect recognition</li>
+                    <li>• Cultural context adaptation</li>
+                    <li>• Continuous learning and improvement</li>
                   </ul>
                 </div>
               </div>
@@ -225,75 +210,71 @@ const OfferForYou = () => {
 
           {/* Investment Section */}
           <div className="bg-slate-800/30 backdrop-blur-md border border-yellow-500/30 rounded-3xl p-8 mb-12">
-            <h2 className="text-3xl font-bold text-white text-center mb-8">Your Investment vs. Return</h2>
+            <h2 className="text-3xl font-bold text-white text-center mb-8">Join the Beta Program</h2>
             <div className="grid md:grid-cols-2 gap-8">
               <div className="text-center">
-                <h3 className="text-2xl font-bold text-white mb-4">Investment</h3>
-                <div className="text-5xl font-bold text-red-400 mb-2">500K DA</div>
-                <div className="text-gray-400">Initial payment (10% upfront)</div>
-                <div className="text-sm text-gray-500 mt-2">Remaining 450K DA after your SaaS generates revenue</div>
+                <h3 className="text-2xl font-bold text-white mb-4">Early Access</h3>
+                <div className="text-5xl font-bold text-green-400 mb-2">FREE</div>
+                <div className="text-gray-400">Beta testing phase</div>
+                <div className="text-sm text-gray-500 mt-2">Limited spots available for founding users</div>
               </div>
               <div className="text-center">
-                <h3 className="text-2xl font-bold text-white mb-4">Potential Return</h3>
-                <div className="text-5xl font-bold premium-text mb-2">600M DA</div>
-                <div className="text-gray-400">Annual revenue potential</div>
-                <div className="text-sm text-gray-500 mt-2">(1,200x return on initial investment)</div>
+                <h3 className="text-2xl font-bold text-white mb-4">Benefits</h3>
+                <div className="text-5xl font-bold premium-text mb-2">Unlimited</div>
+                <div className="text-gray-400">Communication potential</div>
+                <div className="text-sm text-gray-500 mt-2">Connect with anyone, anywhere, in any language</div>
               </div>
             </div>
             <div className="mt-6 p-4 bg-green-500/10 border border-green-500/30 rounded-2xl">
               <div className="text-center">
-                <div className="text-lg font-bold text-green-400 mb-2">🎯 Risk-Free Investment</div>
-                <div className="text-gray-300 text-sm">Pay only 10% upfront. Complete payment only after your SaaS starts generating revenue.</div>
+                <div className="text-lg font-bold text-green-400 mb-2">Beta Tester Advantages</div>
+                <div className="text-gray-300 text-sm">Shape the future of communication, get lifetime premium access, and join an exclusive community of early adopters.</div>
               </div>
             </div>
           </div>
 
           {/* Urgency Section */}
           <div className="bg-red-900/20 border border-red-500/30 rounded-3xl p-8 mb-12">
-            <h2 className="text-3xl font-bold text-white text-center mb-6">Why You Must Act Now</h2>
+            <h2 className="text-3xl font-bold text-white text-center mb-6">Why Experience NASR APP Now?</h2>
             <div className="grid md:grid-cols-3 gap-6">
               <div className="text-center">
-                <div className="text-4xl mb-4">⏰</div>
-                <h4 className="text-white font-semibold mb-2">First-Mover Advantage</h4>
-                <p className="text-gray-300 text-sm">Be the first to capture this market. Others will follow.</p>
+                <div className="text-4xl mb-4"></div>
+                <h4 className="text-white font-semibold mb-2">AI Translation Breakthrough</h4>
+                <p className="text-gray-300 text-sm">We're at the perfect moment where AI technology finally makes real-time translation seamless and natural.</p>
               </div>
               <div className="text-center">
-                <div className="text-4xl mb-4">📈</div>
-                <h4 className="text-white font-semibold mb-2">Market Opportunity</h4>
-                <p className="text-gray-300 text-sm">Your 500K followers are waiting for this solution.</p>
+                <div className="text-4xl mb-4"></div>
+                <h4 className="text-white font-semibold mb-2">Global Need Surge</h4>
+                <p className="text-gray-300 text-sm">Remote work, global travel, and digital nomadism have created unprecedented demand for instant translation.</p>
               </div>
               <div className="text-center">
-                <div className="text-4xl mb-4">💰</div>
-                <h4 className="text-white font-semibold mb-2">Revenue Loss</h4>
-                <p className="text-gray-300 text-sm">Every day you wait, you're losing potential revenue.</p>
+                <div className="text-4xl mb-4"></div>
+                <h4 className="text-white font-semibold mb-2">Early Adopter Benefits</h4>
+                <p className="text-gray-300 text-sm">Join now to influence development, get lifetime access, and be part of the communication revolution.</p>
               </div>
             </div>
           </div>
 
           {/* CTA Section */}
           <div className="text-center">
-            <h3 className="text-3xl font-bold text-white mb-6">Ready to Scale Your Empire?</h3>
+            <h3 className="text-3xl font-bold text-white mb-6">Ready to Break Language Barriers?</h3>
             <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
-              Join the elite 1% of entrepreneurs who take action. 
-              Your 500K followers are waiting for this transformation.
+              Experience the future of communication today. Join thousands who are already connecting 
+              across languages with NASR APP's revolutionary technology.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a 
-                href="https://docs.google.com/forms/d/e/1FAIpQLSf2VuR-BR-i3TWiM1E8ePIPlGjMVWy3bthaUTKx8N29YtVRBw/viewform" 
-                target="_blank" 
-                rel="noopener noreferrer"
+                href="#contact" 
                 className="btn-primary text-lg px-8 py-4"
               >
-                🚀 Start Your Digital Transformation
+                Try Live Demo
               </a>
               <a 
-                href="https://wa.me/+213797339451" 
-                target="_blank" 
-                rel="noopener noreferrer"
+                href="#contact" 
                 className="btn-secondary text-lg px-8 py-4"
               >
-                <span className="mr-2">📞</span>
-                WhatsApp Me
+                <span className="mr-2"></span>
+                Join Beta Waitlist
               </a>
             </div>
           </div>

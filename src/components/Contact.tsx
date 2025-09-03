@@ -1,18 +1,18 @@
 const Contact = () => {
   const socialLinks = [
     {
-      name: "Instagram",
-      url: "https://www.instagram.com/thehivespeakingclub/",
-      icon: "📸",
-      followers: "500K+",
-      description: "Follow us for latest updates and community highlights"
+      name: "GitHub",
+      url: "https://github.com/nasrapp",
+      icon: "",
+      followers: "Source Code",
+      description: "Check out our open-source contributions and development progress"
     },
     {
-      name: "Registration Form",
-      url: "https://docs.google.com/forms/d/e/1FAIpQLSf2VuR-BR-i3TWiM1E8ePIPlGjMVWy3bthaUTKx8N29YtVRBw/viewform",
-      icon: "📝",
-      followers: "Join Now",
-      description: "Register for upcoming sessions and join our community"
+      name: "Email Contact",
+      url: "mailto:info@nasrapp.com",
+      icon: "",
+      followers: "Get in Touch",
+      description: "Contact our development team for questions and feedback"
     }
   ]
 
@@ -24,7 +24,7 @@ const Contact = () => {
             Get in <span className="premium-text">Touch</span>
           </h2>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            Ready to join The HIVE? Connect with us and start your English speaking journey today.
+            Ready to experience NASR APP? Connect with us and be part of breaking down language barriers.
           </p>
         </div>
 
@@ -32,53 +32,53 @@ const Contact = () => {
           {/* Contact Info */}
           <div className="space-y-8">
             <div className="premium-card p-8">
-              <h3 className="text-2xl font-bold text-white mb-6">Contact Information</h3>
+              <h3 className="text-2xl font-bold text-white mb-6">Project Information</h3>
               
               <div className="space-y-4">
                 <div className="flex items-start">
                   <div className="w-10 h-10 premium-gradient rounded-full flex items-center justify-center mr-4 flex-shrink-0 shadow-lg">
-                    <span className="text-slate-900 text-lg">📍</span>
+                    <span className="text-slate-900 text-lg"></span>
                   </div>
                   <div>
-                    <h4 className="text-white font-semibold mb-1">Locations</h4>
+                    <h4 className="text-white font-semibold mb-1">Current Phase</h4>
                     <p className="text-gray-300 text-sm">
-                      Algiers Centre & Tlemcen, Algeria
+                      Phase 1: Test and Research
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start">
                   <div className="w-10 h-10 premium-gradient rounded-full flex items-center justify-center mr-4 flex-shrink-0 shadow-lg">
-                    <span className="text-slate-900 text-lg">⏰</span>
+                    <span className="text-slate-900 text-lg"></span>
                   </div>
                   <div>
-                    <h4 className="text-white font-semibold mb-1">Session Times</h4>
+                    <h4 className="text-white font-semibold mb-1">Platform</h4>
                     <p className="text-gray-300 text-sm">
-                      Saturdays: 1:00 PM - 3:00 PM & 3:30 PM - 5:30 PM
+                      Web-based application (Mobile coming soon)
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start">
                   <div className="w-10 h-10 premium-gradient rounded-full flex items-center justify-center mr-4 flex-shrink-0 shadow-lg">
-                    <span className="text-slate-900 text-lg">💰</span>
+                    <span className="text-slate-900 text-lg"></span>
                   </div>
                   <div>
-                    <h4 className="text-white font-semibold mb-1">Pricing</h4>
+                    <h4 className="text-white font-semibold mb-1">Focus</h4>
                     <p className="text-gray-300 text-sm">
-                      500 DA per session
+                      Real-time translation and communication
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start">
                   <div className="w-10 h-10 premium-gradient rounded-full flex items-center justify-center mr-4 flex-shrink-0 shadow-lg">
-                    <span className="text-slate-900 text-lg">🎯</span>
+                    <span className="text-slate-900 text-lg"></span>
                   </div>
                   <div>
-                    <h4 className="text-white font-semibold mb-1">Requirements</h4>
+                    <h4 className="text-white font-semibold mb-1">Status</h4>
                     <p className="text-gray-300 text-sm">
-                      Age 17-35, Intermediate or Advanced English
+                      Active development and testing
                     </p>
                   </div>
                 </div>
@@ -86,23 +86,23 @@ const Contact = () => {
             </div>
 
             <div className="premium-gradient p-8 rounded-2xl shadow-2xl">
-              <h3 className="text-2xl font-bold text-slate-900 mb-4">Why Join The HIVE?</h3>
+              <h3 className="text-2xl font-bold text-slate-900 mb-4">Why Choose NASR APP?</h3>
               <ul className="space-y-3 text-slate-900">
                 <li className="flex items-center">
                   <span className="mr-3">✓</span>
-                  Improve English speaking skills
+                  Break down language barriers
                 </li>
                 <li className="flex items-center">
                   <span className="mr-3">✓</span>
-                  Build professional network
+                  Real-time communication
                 </li>
                 <li className="flex items-center">
                   <span className="mr-3">✓</span>
-                  Develop critical thinking
+                  Advanced AI technology
                 </li>
                 <li className="flex items-center">
                   <span className="mr-3">✓</span>
-                  Join 500K+ member community
+                  Global accessibility
                 </li>
               </ul>
             </div>
@@ -120,7 +120,7 @@ const Contact = () => {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <div className="text-3xl mr-4">{social.icon}</div>
+                    <div className="text-3xl mr-4"></div>
                     <div>
                       <h3 className="text-xl font-bold text-white mb-1">{social.name}</h3>
                       <p className="text-gray-300 text-sm">{social.description}</p>
@@ -135,17 +135,15 @@ const Contact = () => {
             ))}
 
             <div className="premium-card p-6">
-              <h3 className="text-xl font-bold text-white mb-4">Quick Registration</h3>
+              <h3 className="text-xl font-bold text-white mb-4">Join the Waitlist</h3>
               <p className="text-gray-300 mb-4">
-                Ready to join? Fill out our registration form and we'll get back to you with all the details.
+                Be among the first to experience NASR APP when it launches. Sign up for early access and updates.
               </p>
               <a 
-                href="https://docs.google.com/forms/d/e/1FAIpQLSf2VuR-BR-i3TWiM1E8ePIPlGjMVWy3bthaUTKx8N29YtVRBw/viewform" 
-                target="_blank" 
-                rel="noopener noreferrer"
+                href="#waitlist" 
                 className="btn-primary w-full text-center"
               >
-                Register Now
+                Join Waitlist
               </a>
             </div>
           </div>
@@ -153,27 +151,26 @@ const Contact = () => {
 
         {/* CTA Section */}
         <div className="mt-16 premium-card p-8 text-center">
-          <h3 className="text-3xl font-bold text-white mb-4">Ready to Transform Your English Skills?</h3>
+          <h3 className="text-3xl font-bold text-white mb-4">Ready to Break Language Barriers?</h3>
           <p className="text-gray-300 mb-8 max-w-2xl mx-auto">
-            Join The HIVE Speaking Club today and become part of Algeria's premier English conversation community. 
-            Don't miss out on this opportunity to develop your skills and network with like-minded individuals.
+            Join us in building the future of global communication. NASR APP will revolutionize how people connect across languages and cultures.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a 
-              href="https://docs.google.com/forms/d/e/1FAIpQLSf2VuR-BR-i3TWiM1E8ePIPlGjMVWy3bthaUTKx8N29YtVRBw/viewform" 
+              href="#waitlist" 
               target="_blank" 
               rel="noopener noreferrer"
               className="btn-primary text-lg px-8 py-4"
             >
-              Join The HIVE Now
+              Join Waitlist
             </a>
             <a 
-              href="https://www.instagram.com/thehivespeakingclub/" 
+              href="#about" 
               target="_blank" 
               rel="noopener noreferrer"
               className="btn-secondary text-lg px-8 py-4"
             >
-              Follow on Instagram
+              Learn More
             </a>
           </div>
         </div>

@@ -6,26 +6,38 @@ const Footer = () => {
           {/* Brand */}
           <div className="md:col-span-2">
             <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 premium-gradient rounded-full flex items-center justify-center shadow-lg">
-                <span className="text-slate-900 font-bold text-lg">1</span>
-              </div>
               <div>
-                <h3 className="text-white font-bold text-xl">The HIVE</h3>
-                <p className="premium-text text-sm">Speaking Club</p>
+                <h3 className="text-white font-bold text-xl">NASR APP</h3>
+                <p className="premium-text text-sm">Real-time Translation</p>
+                <p className="text-gray-300 text-sm mt-1">نــاصـر آل خازم</p>
               </div>
             </div>
             <p className="text-gray-300 mb-6 max-w-md">
-              Algeria's premier English speaking club, fostering a community of confident speakers 
-              and global citizens through interactive debates and networking.
+              Breaking down language barriers through advanced AI translation technology, 
+              connecting people across cultures and enabling seamless global communication.
             </p>
             <div className="flex space-x-4">
               <a 
-                href="https://www.instagram.com/thehivespeakingclub/" 
+                href="https://github.com/nasrapp" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="premium-text hover:text-yellow-300 transition-colors"
               >
-                <span className="text-2xl">📸</span>
+                <span className="text-2xl">💻</span>
+              </a>
+              <a 
+                href="mailto:info@nasrapp.com" 
+                className="premium-text hover:text-yellow-300 transition-colors"
+              >
+                <span className="text-2xl">📧</span>
+              </a>
+              <a 
+                href="https://wa.me/966535523013" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="premium-text hover:text-yellow-300 transition-colors"
+              >
+                <span className="text-2xl">📱</span>
               </a>
             </div>
           </div>
@@ -41,10 +53,10 @@ const Footer = () => {
                 <a href="#about" className="text-gray-300 hover:text-yellow-400 transition-colors">About</a>
               </li>
               <li>
-                <a href="#services" className="text-gray-300 hover:text-yellow-400 transition-colors">Services</a>
+                <a href="#services" className="text-gray-300 hover:text-yellow-400 transition-colors">Technology</a>
               </li>
               <li>
-                <a href="#locations" className="text-gray-300 hover:text-yellow-400 transition-colors">Locations</a>
+                <a href="#locations" className="text-gray-300 hover:text-yellow-400 transition-colors">Platforms</a>
               </li>
               <li>
                 <a href="#contact" className="text-gray-300 hover:text-yellow-400 transition-colors">Contact</a>
@@ -57,20 +69,24 @@ const Footer = () => {
             <h4 className="text-white font-semibold mb-4">Contact</h4>
             <ul className="space-y-2 text-gray-300">
               <li className="flex items-center">
-                <span className="mr-2">📍</span>
-                Algiers & Tlemcen
+                <span className="mr-2"></span>
+                Saudi Arabia
               </li>
               <li className="flex items-center">
-                <span className="mr-2">⏰</span>
-                Saturdays
+                <span className="mr-2"></span>
+                Web Platform
               </li>
               <li className="flex items-center">
-                <span className="mr-2">💰</span>
-                500 DA/session
+                <span className="mr-2"></span>
+                Phase 1: Beta
               </li>
               <li className="flex items-center">
-                <span className="mr-2">📸</span>
-                500K+ followers
+                <span className="mr-2"></span>
+                50+ Languages
+              </li>
+              <li className="flex items-center">
+                <span className="mr-2"></span>
+                <a href="https://wa.me/966535523013" target="_blank" rel="noopener noreferrer" className="premium-text hover:text-yellow-300 transition-colors">+966 53 552 3013</a>
               </li>
             </ul>
           </div>
@@ -79,24 +95,36 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="border-t border-yellow-500/30 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
           <div className="text-gray-400 text-sm mb-4 md:mb-0">
-            © 2024 The HIVE Speaking Club. All rights reserved.
+            © 2024 NASR APP. All rights reserved. Built in Saudi Arabia.
           </div>
           <div className="flex space-x-6">
             <a 
-              href="https://docs.google.com/forms/d/e/1FAIpQLSf2VuR-BR-i3TWiM1E8ePIPlGjMVWy3bthaUTKx8N29YtVRBw/viewform" 
-              target="_blank" 
-              rel="noopener noreferrer"
+              href="#contact" 
               className="premium-text hover:text-yellow-300 transition-colors text-sm"
             >
-              Register Now
+              Join Beta
             </a>
             <a 
-              href="https://www.instagram.com/thehivespeakingclub/" 
+              href="#about" 
+              className="premium-text hover:text-yellow-300 transition-colors text-sm"
+            >
+              Learn More
+            </a>
+            <a 
+              href="https://github.com/nasrapp" 
               target="_blank" 
               rel="noopener noreferrer"
               className="premium-text hover:text-yellow-300 transition-colors text-sm"
             >
-              Follow on Instagram
+              GitHub
+            </a>
+            <a 
+              href="https://wa.me/966535523013" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="premium-text hover:text-yellow-300 transition-colors text-sm"
+            >
+              WhatsApp
             </a>
           </div>
         </div>
