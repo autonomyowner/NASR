@@ -31,6 +31,12 @@ const Navbar = () => {
             >
               About Us
             </Link>
+            <Link 
+              to="/call" 
+              className={`transition-colors ${location.pathname === '/call' ? 'text-yellow-400' : 'text-white hover:text-yellow-400'}`}
+            >
+              Call
+            </Link>
             <a 
               href="#contact" 
               className="btn-primary"
@@ -71,6 +77,13 @@ const Navbar = () => {
                 onClick={() => setIsMenuOpen(false)}
               >
                 About Us
+              </Link>
+              <Link 
+                to="/call" 
+                className={`block px-3 py-2 transition-colors ${location.pathname === '/call' ? 'text-yellow-400' : 'text-white hover:text-yellow-400'}`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Call
               </Link>
               <a 
                 href="#contact" 

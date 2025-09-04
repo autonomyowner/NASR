@@ -1,0 +1,51 @@
+export interface CallState {
+  isCallActive: boolean
+  isConnecting: boolean
+  isMuted: boolean
+  isTranslationEnabled: boolean
+  localStream: MediaStream | null
+  remoteStream: MediaStream | null
+  callId: string | null
+  peerId: string | null
+  qualityMetrics?: CallQualityMetrics
+  qualityScore?: number
+  qualityText?: string
+}
+
+export interface CallQualityMetrics {
+  connectionState: string
+  iceConnectionState: string
+  audioLevel: number
+  packetsLost: number
+  packetsReceived: number
+  jitter: number
+  rtt: number
+  bitrate: number
+  networkType: string
+  signalStrength: 'excellent' | 'good' | 'fair' | 'poor' | 'unknown'
+}
+
+export interface CallControls {
+  startCall: (peerId: string) => Promise<void>
+  endCall: () => void
+  toggleMute: () => void
+  toggleTranslation: () => void
+  answerCall: () => Promise<void>
+  declineCall: () => void
+}
+
+export interface TranscriptionData {
+  text: string
+  language: string
+  translation?: string
+  timestamp: number
+  isFinal: boolean
+}
+
+export interface SignalingMessage {
+  type: 'offer' | 'answer' | 'ice-candidate' | 'call-request' | 'call-accepted' | 'call-declined' | 'call-ended'
+  data?: unknown
+  from: string
+  to: string
+  callId: string
+}
