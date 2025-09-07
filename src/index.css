@@ -57,21 +57,20 @@
     border-color: rgba(34,211,238,0.25);
   }
 
-  .hero-grid-light {
-    background-color: #D3E3E0;
+  .hero-grid {
     background-image: 
-      linear-gradient(rgba(74,108,92,0.08) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(74,108,92,0.08) 1px, transparent 1px);
-    background-size: 24px 24px;
+      linear-gradient(120deg, rgba(255,255,255,0.06) 1px, transparent 1px),
+      linear-gradient(60deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-size: 32px 32px, 32px 32px;
     background-position: center;
   }
 
   .btn-primary {
-    @apply bg-aqua-accent text-white font-semibold px-6 py-3 rounded-lg hover:bg-aqua-accent-hover transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl;
+    @apply bg-hive-cyan text-slate-900 font-semibold px-6 py-3 rounded-lg hover:bg-cyan-400 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl;
   }
   
   .btn-secondary {
-    @apply border-2 border-aqua-accent text-aqua-accent font-semibold px-6 py-3 rounded-lg hover:bg-aqua-accent hover:text-white transition-all duration-300 shadow-lg hover:shadow-xl;
+    @apply border-2 border-hive-cyan text-hive-cyan font-semibold px-6 py-3 rounded-lg hover:bg-hive-cyan hover:text-slate-900 transition-all duration-300 shadow-lg hover:shadow-xl;
   }
   
   .section-padding {

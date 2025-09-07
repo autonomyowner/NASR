@@ -51,7 +51,7 @@ const TypewriterEffect = ({
     <span className={`inline-block ${className}`} aria-live="polite">
       {currentText}
       <span 
-        className="inline-block w-0.5 h-6 bg-aqua-accent ml-1 animate-pulse"
+        className="inline-block w-0.5 h-6 bg-cyan-400 ml-1 animate-pulse"
         aria-hidden="true"
       />
     </span>

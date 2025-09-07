@@ -160,10 +160,10 @@ const Call = () => {
       <div className="relative z-10">
         <div className="container-custom">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-800 mb-6">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
               Voice Call with <span className="premium-text">Real-time Translation</span>
             </h2>
-            <p className="text-slate-700 text-lg max-w-2xl mx-auto">
+            <p className="text-gray-300 text-lg max-w-2xl mx-auto">
               Connect with people around the world and break language barriers with Travoice's 
               real-time voice translation technology.
             </p>
@@ -174,17 +174,17 @@ const Call = () => {
               {/* Your ID and Connection Status */}
               <div className="max-w-2xl mx-auto">
                 <div className="glass-effect backdrop-blur-lg bg-white/20 border border-emerald-400/30 p-6 rounded-2xl shadow-2xl">
-                  <h3 className="text-xl font-bold text-slate-800 mb-4 text-center">Your Connection</h3>
+                  <h3 className="text-xl font-bold text-white mb-4 text-center">Your Connection</h3>
                   
                   {/* Your ID */}
                   <div className="mb-4">
-                    <label className="block text-slate-700 font-medium mb-2">Your ID</label>
+                    <label className="block text-gray-300 font-medium mb-2">Your ID</label>
                     <div className="flex space-x-2">
                       <input
                         type="text"
                         value={peerConnection.peerId}
                         readOnly
-                        className="flex-1 p-3 bg-white/80 border border-emerald-300 rounded-lg text-slate-800 font-mono text-sm"
+                        className="flex-1 p-3 bg-white/80 border border-emerald-300 rounded-lg text-white font-mono text-sm"
                       />
                       <button
                         onClick={peerConnection.copyPeerId}
@@ -193,7 +193,7 @@ const Call = () => {
                         📋 Copy
                       </button>
                     </div>
-                    <p className="text-xs text-slate-600 mt-1">Share this ID with others so they can call you</p>
+                    <p className="text-xs text-white mt-1">Share this ID with others so they can call you</p>
                   </div>
 
                   {/* Connection Status */}
@@ -223,7 +223,7 @@ const Call = () => {
 
                   {/* Online Users Count */}
                   {peerConnection.isConnected && (
-                    <div className="text-center text-sm text-slate-600">
+                    <div className="text-center text-sm text-white">
                       {peerConnection.onlineUsers.length} other user{peerConnection.onlineUsers.length !== 1 ? 's' : ''} online
                     </div>
                   )}
@@ -235,12 +235,12 @@ const Call = () => {
                 
                 {/* Recent Contacts */}
                 <div className="glass-effect backdrop-blur-lg bg-white/20 border border-emerald-400/30 p-6 rounded-2xl shadow-2xl">
-                  <h3 className="text-lg font-bold text-slate-800 mb-4">Recent Contacts</h3>
+                  <h3 className="text-lg font-bold text-white mb-4">Recent Contacts</h3>
                   <div className="space-y-3">
                     {callHistory.recentContacts.slice(0, 3).map(contact => (
                       <div key={contact.id} className="flex items-center justify-between p-2 bg-white/30 rounded-lg">
                         <div>
-                          <p className="font-medium text-slate-800">{contact.name}</p>
+                          <p className="font-medium text-white">{contact.name}</p>
                           <p className="text-sm text-slate-600">{contact.peerId}</p>
                         </div>
                         <button
@@ -259,12 +259,12 @@ const Call = () => {
 
                 {/* Favorites */}
                 <div className="glass-effect backdrop-blur-lg bg-white/20 border border-emerald-400/30 p-6 rounded-2xl shadow-2xl">
-                  <h3 className="text-lg font-bold text-slate-800 mb-4">Favorites</h3>
+                  <h3 className="text-lg font-bold text-white mb-4">Favorites</h3>
                   <div className="space-y-3">
                     {callHistory.favoriteContacts.slice(0, 3).map(contact => (
                       <div key={contact.id} className="flex items-center justify-between p-2 bg-white/30 rounded-lg">
                         <div>
-                          <p className="font-medium text-slate-800">{contact.name} ⭐</p>
+                          <p className="font-medium text-white">{contact.name} ⭐</p>
                           <p className="text-sm text-slate-600">{contact.peerId}</p>
                         </div>
                         <button
@@ -283,21 +283,21 @@ const Call = () => {
 
                 {/* Call Stats */}
                 <div className="glass-effect backdrop-blur-lg bg-white/20 border border-emerald-400/30 p-6 rounded-2xl shadow-2xl">
-                  <h3 className="text-lg font-bold text-slate-800 mb-4">Call Statistics</h3>
+                  <h3 className="text-lg font-bold text-white mb-4">Call Statistics</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-slate-700">Total Calls:</span>
-                      <span className="font-medium text-slate-800">{callHistory.callStats.totalCalls}</span>
+                      <span className="text-gray-300">Total Calls:</span>
+                      <span className="font-medium text-white">{callHistory.callStats.totalCalls}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-700">Total Duration:</span>
-                      <span className="font-medium text-slate-800">
+                      <span className="text-gray-300">Total Duration:</span>
+                      <span className="font-medium text-white">
                         {Math.floor(callHistory.callStats.totalDuration / 60)}m {callHistory.callStats.totalDuration % 60}s
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-700">Answer Rate:</span>
-                      <span className="font-medium text-slate-800">{Math.round(callHistory.callStats.answerRate)}%</span>
+                      <span className="text-gray-300">Answer Rate:</span>
+                      <span className="font-medium text-white">{Math.round(callHistory.callStats.answerRate)}%</span>
                     </div>
                   </div>
                 </div>
@@ -322,12 +322,12 @@ const Call = () => {
               {/* Contacts Management */}
               {showContacts && (
                 <div className="glass-effect backdrop-blur-lg bg-white/20 border border-emerald-400/30 p-6 rounded-2xl shadow-2xl">
-                  <h3 className="text-xl font-bold text-slate-800 mb-4">Contacts</h3>
+                  <h3 className="text-xl font-bold text-white mb-4">Contacts</h3>
                   <div className="space-y-3 max-h-64 overflow-y-auto">
                     {callHistory.contacts.map(contact => (
                       <div key={contact.id} className="flex items-center justify-between p-3 bg-white/30 rounded-lg">
                         <div className="flex-1">
-                          <p className="font-medium text-slate-800">
+                          <p className="font-medium text-white">
                             {contact.name} {contact.isFavorite && '⭐'}
                           </p>
                           <p className="text-sm text-slate-600">{contact.peerId}</p>
@@ -369,7 +369,7 @@ const Call = () => {
               {showHistory && (
                 <div className="glass-effect backdrop-blur-lg bg-white/20 border border-emerald-400/30 p-6 rounded-2xl shadow-2xl">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-bold text-slate-800">Call History</h3>
+                    <h3 className="text-xl font-bold text-white">Call History</h3>
                     <button
                       onClick={callHistory.clearHistory}
                       className="text-sm bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
@@ -381,7 +381,7 @@ const Call = () => {
                     {callHistory.callHistory.slice(0, 10).map(entry => (
                       <div key={entry.id} className="p-3 bg-white/30 rounded-lg">
                         <div className="flex justify-between items-start mb-1">
-                          <p className="font-medium text-slate-800">{entry.contactName}</p>
+                          <p className="font-medium text-white">{entry.contactName}</p>
                           <span className={`text-xs px-2 py-1 rounded ${
                             entry.quality === 'excellent' ? 'bg-green-200 text-green-800' :
                             entry.quality === 'good' ? 'bg-blue-200 text-blue-800' :
@@ -412,13 +412,13 @@ const Call = () => {
               {/* Call Setup Interface */}
               <div className="max-w-2xl mx-auto">
               <div className="glass-effect backdrop-blur-lg bg-white/20 border border-emerald-400/30 p-8 rounded-2xl shadow-2xl">
-                <h3 className="text-2xl font-bold text-slate-800 mb-6 text-center">
+                <h3 className="text-2xl font-bold text-white mb-6 text-center">
                   Start a Voice Call
                 </h3>
                 
                 {/* Peer ID Input */}
                 <div className="mb-6">
-                  <label className="block text-slate-700 font-medium mb-2">
+                  <label className="block text-gray-300 font-medium mb-2">
                     Enter Peer ID or Phone Number
                   </label>
                   <input
@@ -426,13 +426,13 @@ const Call = () => {
                     value={peerId}
                     onChange={(e) => setPeerId(e.target.value)}
                     placeholder="e.g. user-123 or +1234567890"
-                    className="w-full p-4 bg-white/80 border border-emerald-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 text-slate-800"
+                    className="w-full p-4 bg-white/80 border border-emerald-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 text-white"
                   />
                 </div>
 
                 {/* Language Selection */}
                 <div className="mb-6">
-                  <label className="block text-slate-700 font-medium mb-2">
+                  <label className="block text-gray-300 font-medium mb-2">
                     Translate to Language
                   </label>
                   <select
@@ -441,7 +441,7 @@ const Call = () => {
                       setSelectedLanguage(e.target.value)
                       translatedSpeech.setTargetLanguage(e.target.value)
                     }}
-                    className="w-full p-4 bg-white/80 border border-emerald-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 text-slate-800"
+                    className="w-full p-4 bg-white/80 border border-emerald-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 text-white"
                   >
                     {supportedLanguages.map(lang => (
                       <option key={lang} value={lang}>
@@ -510,7 +510,7 @@ const Call = () => {
                 
                 {/* Call Controls */}
                 <div className="glass-effect backdrop-blur-lg bg-white/20 border border-emerald-400/30 p-6 rounded-2xl shadow-2xl">
-                  <h3 className="text-xl font-bold text-slate-800 mb-4 text-center">
+                  <h3 className="text-xl font-bold text-white mb-4 text-center">
                     Call Controls
                   </h3>
                   
@@ -532,7 +532,7 @@ const Call = () => {
                     {webRTC.qualityMetrics && (
                       <div className="p-3 bg-white/80 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-slate-700">Call Quality</span>
+                          <span className="text-sm font-medium text-gray-300">Call Quality</span>
                           <span className={`text-sm font-bold ${
                             webRTC.qualityScore! >= 80 ? 'text-green-600' :
                             webRTC.qualityScore! >= 60 ? 'text-yellow-600' :
@@ -612,7 +612,7 @@ const Call = () => {
 
                 {/* Real-time Translation Display */}
                 <div className="glass-effect backdrop-blur-lg bg-white/20 border border-emerald-400/30 p-6 rounded-2xl shadow-2xl">
-                  <h3 className="text-xl font-bold text-slate-800 mb-4 text-center">
+                  <h3 className="text-xl font-bold text-white mb-4 text-center">
                     Live Translation
                   </h3>
                   
@@ -638,7 +638,7 @@ const Call = () => {
                     {translatedSpeech.transcript && (
                       <div className="p-4 bg-gray-100 rounded-lg">
                         <p className="text-sm text-gray-600 mb-1">Original:</p>
-                        <p className="text-gray-800">{translatedSpeech.transcript}</p>
+                        <p className="text-white">{translatedSpeech.transcript}</p>
                       </div>
                     )}
 
@@ -663,7 +663,7 @@ const Call = () => {
                 {showTranscript && (
                   <div className="glass-effect backdrop-blur-lg bg-white/20 border border-emerald-400/30 p-6 rounded-2xl shadow-2xl">
                     <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-xl font-bold text-slate-800">
+                      <h3 className="text-xl font-bold text-white">
                         Conversation Log
                       </h3>
                       <button
@@ -687,7 +687,7 @@ const Call = () => {
                               <div className="text-sm text-gray-600 mb-1">
                                 {new Date(item.timestamp).toLocaleTimeString()}
                               </div>
-                              <div className="text-gray-800 mb-2">{item.text}</div>
+                              <div className="text-white mb-2">{item.text}</div>
                               {item.translation && (
                                 <div className="text-emerald-700 italic">
                                   → {item.translation}
