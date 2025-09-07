@@ -170,7 +170,7 @@ export const useWebRTC = (): CallState & CallControls => {
   }, [initializePeerConnection, getUserMedia])
 
   // Handle incoming call answer
-  const handleCallAnswer = useCallback(async (fromPeerId: string, answer: RTCSessionDescriptionInit) => {
+  const handleCallAnswer = useCallback(async (_fromPeerId: string, answer: RTCSessionDescriptionInit) => {
     try {
       if (!peerConnection.current) {
         console.error('No peer connection available')
