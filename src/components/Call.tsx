@@ -1,8 +1,17 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useWebRTC } from '../hooks/useWebRTC'
 import { useTranslatedSpeech } from '../hooks/useTranslatedSpeech'
 import { useCallHistory } from '../hooks/useCallHistory'
+import { usePeerConnection } from '../hooks/usePeerConnection'
+import { useIncomingCall } from '../hooks/useIncomingCall'
+import { useNotifications } from '../hooks/useNotifications'
 import { translationService } from '../services/translationService'
+import { signalingService } from '../services/signalingService'
+import IncomingCallModal from './IncomingCallModal'
+import CallTimer from './CallTimer'
+import NotificationContainer from './NotificationContainer'
+import MicrophoneStatus from './MicrophoneStatus'
+import WebRTCDebug from './WebRTCDebug'
 
 const Call = () => {
   const [peerId, setPeerId] = useState('')
@@ -14,6 +23,11 @@ const Call = () => {
   const webRTC = useWebRTC()
   const translatedSpeech = useTranslatedSpeech(selectedLanguage)
   const callHistory = useCallHistory()
+  const peerConnection = usePeerConnection()
+  const incomingCall = useIncomingCall(webRTC.answerCall)
+  const notifications = useNotifications()
+  
+  const callStartTimeRef = useRef<number | null>(null)
 
   const supportedLanguages = translationService.getSupportedLanguages()
 
@@ -26,11 +40,14 @@ const Call = () => {
     }
   }, [webRTC.isCallActive, webRTC.isTranslationEnabled])
 
-  // Handle call start - add to history
+  // Handle call start - add to history and track time
   useEffect(() => {
     if (webRTC.isCallActive && webRTC.peerId && !callHistory.currentCall) {
       const contact = callHistory.findContact(webRTC.peerId)
       callHistory.startCall(webRTC.peerId, contact?.name)
+      callStartTimeRef.current = Date.now()
+    } else if (!webRTC.isCallActive) {
+      callStartTimeRef.current = null
     }
   }, [webRTC.isCallActive, webRTC.peerId, callHistory])
 
@@ -54,16 +71,55 @@ const Call = () => {
     }
   }, [translatedSpeech.translatedText, callHistory])
 
+  // Set up signaling error handlers
+  useEffect(() => {
+    signalingService.onCallFailed = (reason: string) => {
+      notifications.error('Call Failed', reason)
+    }
+
+    signalingService.onUserBusy = (peerId: string) => {
+      notifications.warning('User Busy', `${peerId} is currently on another call`)
+    }
+
+    return () => {
+      signalingService.onCallFailed = null
+      signalingService.onUserBusy = null
+    }
+  }, [])
+
+  // Connection status notifications
+  useEffect(() => {
+    if (peerConnection.connectionError) {
+      notifications.error('Connection Error', peerConnection.connectionError, true)
+    } else if (peerConnection.isConnected) {
+      notifications.success('Connected', 'Successfully connected to signaling server')
+    }
+  }, [peerConnection.isConnected, peerConnection.connectionError])
+
+  // Call state notifications
+  useEffect(() => {
+    if (webRTC.isCallActive && webRTC.peerId) {
+      notifications.success('Call Connected', `Connected to ${webRTC.peerId}`)
+    }
+  }, [webRTC.isCallActive, webRTC.peerId])
+
   const handleStartCall = async () => {
     if (!peerId.trim()) {
-      alert('Please enter a Peer ID')
+      notifications.warning('Missing Peer ID', 'Please enter a Peer ID to start the call')
+      return
+    }
+
+    if (!peerConnection.isConnected) {
+      notifications.error('Connection Required', 'Please wait for the connection to be established before starting a call')
       return
     }
     
     try {
       await webRTC.startCall(peerId.trim())
+      notifications.info('Calling...', `Attempting to connect to ${peerId.trim()}`)
     } catch (error) {
-      alert(`Failed to start call: ${error}`)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      notifications.error('Call Failed', `Failed to start call: ${errorMessage}`)
     }
   }
 
@@ -108,13 +164,72 @@ const Call = () => {
               Voice Call with <span className="premium-text">Real-time Translation</span>
             </h2>
             <p className="text-slate-700 text-lg max-w-2xl mx-auto">
-              Connect with people around the world and break language barriers with NASR APP's 
+              Connect with people around the world and break language barriers with Travoice's 
               real-time voice translation technology.
             </p>
           </div>
 
           {!webRTC.isCallActive ? (
             <div className="max-w-6xl mx-auto space-y-8">
+              {/* Your ID and Connection Status */}
+              <div className="max-w-2xl mx-auto">
+                <div className="glass-effect backdrop-blur-lg bg-white/20 border border-emerald-400/30 p-6 rounded-2xl shadow-2xl">
+                  <h3 className="text-xl font-bold text-slate-800 mb-4 text-center">Your Connection</h3>
+                  
+                  {/* Your ID */}
+                  <div className="mb-4">
+                    <label className="block text-slate-700 font-medium mb-2">Your ID</label>
+                    <div className="flex space-x-2">
+                      <input
+                        type="text"
+                        value={peerConnection.peerId}
+                        readOnly
+                        className="flex-1 p-3 bg-white/80 border border-emerald-300 rounded-lg text-slate-800 font-mono text-sm"
+                      />
+                      <button
+                        onClick={peerConnection.copyPeerId}
+                        className="px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
+                      >
+                        📋 Copy
+                      </button>
+                    </div>
+                    <p className="text-xs text-slate-600 mt-1">Share this ID with others so they can call you</p>
+                  </div>
+
+                  {/* Connection Status */}
+                  <div className="flex items-center justify-center space-x-3 p-3 rounded-lg mb-4" style={{
+                    backgroundColor: peerConnection.isConnected ? 'rgb(220, 252, 231)' : peerConnection.connectionError ? 'rgb(254, 226, 226)' : 'rgb(254, 243, 199)'
+                  }}>
+                    <div className={`w-3 h-3 rounded-full ${
+                      peerConnection.isConnected ? 'bg-green-500 animate-pulse' : 
+                      peerConnection.connectionError ? 'bg-red-500' : 'bg-yellow-500'
+                    }`} />
+                    <span className={`font-medium ${
+                      peerConnection.isConnected ? 'text-green-800' : 
+                      peerConnection.connectionError ? 'text-red-800' : 'text-yellow-800'
+                    }`}>
+                      {peerConnection.isConnected ? 'Connected' : 
+                       peerConnection.connectionError ? `Disconnected (${peerConnection.connectionError})` : 'Connecting...'}
+                    </span>
+                    {!peerConnection.isConnected && (
+                      <button
+                        onClick={peerConnection.reconnect}
+                        className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
+                      >
+                        Reconnect
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Online Users Count */}
+                  {peerConnection.isConnected && (
+                    <div className="text-center text-sm text-slate-600">
+                      {peerConnection.onlineUsers.length} other user{peerConnection.onlineUsers.length !== 1 ? 's' : ''} online
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* Recent Contacts & Quick Actions */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
@@ -336,6 +451,11 @@ const Call = () => {
                   </select>
                 </div>
 
+                {/* Microphone Status */}
+                <div className="mb-4">
+                  <MicrophoneStatus />
+                </div>
+
                 {/* Speech Recognition Support Check */}
                 {!translatedSpeech.isSupported && (
                   <div className="mb-4 p-4 bg-yellow-100 border border-yellow-300 rounded-lg">
@@ -349,10 +469,11 @@ const Call = () => {
                 {/* Call Button */}
                 <button
                   onClick={handleStartCall}
-                  disabled={webRTC.isConnecting || !peerId.trim()}
+                  disabled={webRTC.isConnecting || !peerId.trim() || !peerConnection.isConnected}
                   className="w-full btn-primary py-4 text-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {webRTC.isConnecting ? 'Connecting...' : 'Start Call'}
+                  {webRTC.isConnecting ? 'Connecting...' : 
+                   !peerConnection.isConnected ? 'Disconnected - Cannot Start Call' : 'Start Call'}
                 </button>
 
                 {/* Save Contact Option */}
@@ -400,6 +521,12 @@ const Call = () => {
                         📞 Connected to {webRTC.peerId}
                       </p>
                     </div>
+
+                    {/* Call Timer */}
+                    <CallTimer 
+                      isActive={webRTC.isCallActive} 
+                      startTime={callStartTimeRef.current || undefined} 
+                    />
 
                     {/* Call Quality Indicator */}
                     {webRTC.qualityMetrics && (
@@ -577,6 +704,38 @@ const Call = () => {
           )}
         </div>
       </div>
+
+      {/* Hidden Audio Element for Remote Stream */}
+      {webRTC.remoteStream && (
+        <audio
+          ref={(audio) => {
+            if (audio && webRTC.remoteStream) {
+              audio.srcObject = webRTC.remoteStream
+              audio.play().catch(console.error)
+            }
+          }}
+          autoPlay
+          playsInline
+          style={{ display: 'none' }}
+        />
+      )}
+
+      {/* Incoming Call Modal */}
+      <IncomingCallModal
+        incomingCall={incomingCall.incomingCall}
+        isRinging={incomingCall.isRinging}
+        onAccept={incomingCall.acceptCall}
+        onDecline={incomingCall.declineCall}
+      />
+
+      {/* Notifications */}
+      <NotificationContainer
+        notifications={notifications.notifications}
+        onClose={notifications.removeNotification}
+      />
+
+      {/* WebRTC Debug Info (only in development) */}
+      <WebRTCDebug show={import.meta.env.DEV} />
     </section>
   )
 }

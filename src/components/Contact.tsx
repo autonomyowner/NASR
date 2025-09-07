@@ -24,7 +24,7 @@ const Contact = () => {
             Get in <span className="premium-text">Touch</span>
           </h2>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            Ready to experience NASR APP? Connect with us and be part of breaking down language barriers.
+            Ready to experience Travoice? Connect with us and be part of breaking down language barriers.
           </p>
         </div>
 
@@ -86,7 +86,7 @@ const Contact = () => {
             </div>
 
             <div className="premium-gradient p-8 rounded-2xl shadow-2xl">
-              <h3 className="text-2xl font-bold text-slate-900 mb-4">Why Choose NASR APP?</h3>
+              <h3 className="text-2xl font-bold text-slate-900 mb-4">Why Choose Travoice?</h3>
               <ul className="space-y-3 text-slate-900">
                 <li className="flex items-center">
                   <span className="mr-3">✓</span>
@@ -137,7 +137,7 @@ const Contact = () => {
             <div className="premium-card p-6">
               <h3 className="text-xl font-bold text-white mb-4">Join the Waitlist</h3>
               <p className="text-gray-300 mb-4">
-                Be among the first to experience NASR APP when it launches. Sign up for early access and updates.
+                Be among the first to experience Travoice when it launches. Sign up for early access and updates.
               </p>
               <a 
                 href="#waitlist" 
@@ -153,7 +153,7 @@ const Contact = () => {
         <div className="mt-16 premium-card p-8 text-center">
           <h3 className="text-3xl font-bold text-white mb-4">Ready to Break Language Barriers?</h3>
           <p className="text-gray-300 mb-8 max-w-2xl mx-auto">
-            Join us in building the future of global communication. NASR APP will revolutionize how people connect across languages and cultures.
+            Join us in building the future of global communication. Travoice will revolutionize how people connect across languages and cultures.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a 

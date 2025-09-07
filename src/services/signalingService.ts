@@ -1,4 +1,5 @@
 import { io, Socket } from 'socket.io-client'
+import { getConfig } from './configService'
 
 export class SignalingService {
   private socket: Socket | null = null
@@ -12,11 +13,15 @@ export class SignalingService {
   public onCallEnded: (() => void) | null = null
   public onUsersUpdated: ((users: string[]) => void) | null = null
   public onConnectionStatus: ((connected: boolean) => void) | null = null
+  public onCallFailed: ((reason: string) => void) | null = null
+  public onUserBusy: ((peerId: string) => void) | null = null
 
-  connect(serverUrl: string = 'ws://localhost:3001'): Promise<void> {
+  connect(serverUrl?: string): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
-        this.socket = io(serverUrl)
+        const config = getConfig()
+        const url = serverUrl || config.signalingUrl
+        this.socket = io(url)
         
         this.socket.on('connect', () => {
           console.log('Connected to signaling server')
@@ -80,7 +85,17 @@ export class SignalingService {
         // Handle call failures
         this.socket.on('call-failed', ({ reason }) => {
           console.log('Call failed:', reason)
-          alert(`Call failed: ${reason}`)
+          if (this.onCallFailed) {
+            this.onCallFailed(reason)
+          }
+        })
+
+        // Handle user busy
+        this.socket.on('user-busy', ({ peerId }) => {
+          console.log('User is busy:', peerId)
+          if (this.onUserBusy) {
+            this.onUserBusy(peerId)
+          }
         })
 
       } catch (error) {
@@ -127,8 +142,8 @@ export class SignalingService {
   }
 
   endCall(to: string): void {
-    if (this.socket?.connected) {
-      this.socket.emit('end-call', { to })
+    if (this.socket?.connected && this.currentPeerId) {
+      this.socket.emit('end-call', { to, from: this.currentPeerId })
     }
   }
 

@@ -30,8 +30,10 @@ export interface CallControls {
   endCall: () => void
   toggleMute: () => void
   toggleTranslation: () => void
-  answerCall: () => Promise<void>
+  answerCall: (fromPeerId: string, offer: RTCSessionDescriptionInit) => Promise<void>
   declineCall: () => void
+  handleCallAnswer: (fromPeerId: string, answer: RTCSessionDescriptionInit) => Promise<void>
+  handleIceCandidate: (candidate: RTCIceCandidateInit) => Promise<void>
 }
 
 export interface TranscriptionData {

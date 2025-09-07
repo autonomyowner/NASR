@@ -1,13 +1,13 @@
 const Footer = () => {
   return (
-    <footer className="glass-effect border-t border-yellow-500/30">
+    <footer className="glass-effect border-t border-cyan-500/30">
       <div className="container-custom py-12">
         <div className="grid md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="md:col-span-2">
             <div className="flex items-center space-x-2 mb-4">
               <div>
-                <h3 className="text-white font-bold text-xl">NASR APP</h3>
+                <h3 className="text-white font-bold text-xl">Travoice</h3>
                 <p className="premium-text text-sm">Real-time Translation</p>
                 <p className="text-gray-300 text-sm mt-1">نــاصـر آل خازم</p>
               </div>
@@ -21,13 +21,13 @@ const Footer = () => {
                 href="https://github.com/nasrapp" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="premium-text hover:text-yellow-300 transition-colors"
+                className="premium-text hover:text-cyan-300 transition-colors"
               >
                 <span className="text-2xl">💻</span>
               </a>
               <a 
                 href="mailto:info@nasrapp.com" 
-                className="premium-text hover:text-yellow-300 transition-colors"
+                className="premium-text hover:text-cyan-300 transition-colors"
               >
                 <span className="text-2xl">📧</span>
               </a>
@@ -35,7 +35,7 @@ const Footer = () => {
                 href="https://wa.me/966535523013" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="premium-text hover:text-yellow-300 transition-colors"
+                className="premium-text hover:text-cyan-300 transition-colors"
               >
                 <span className="text-2xl">📱</span>
               </a>
@@ -47,19 +47,19 @@ const Footer = () => {
             <h4 className="text-white font-semibold mb-4">Quick Links</h4>
             <ul className="space-y-2">
               <li>
-                <a href="#home" className="text-gray-300 hover:text-yellow-400 transition-colors">Home</a>
+                <a href="#home" className="text-gray-300 hover:text-cyan-400 transition-colors">Home</a>
               </li>
               <li>
-                <a href="#about" className="text-gray-300 hover:text-yellow-400 transition-colors">About</a>
+                <a href="#about" className="text-gray-300 hover:text-cyan-400 transition-colors">About</a>
               </li>
               <li>
-                <a href="#services" className="text-gray-300 hover:text-yellow-400 transition-colors">Technology</a>
+                <a href="#services" className="text-gray-300 hover:text-cyan-400 transition-colors">Technology</a>
               </li>
               <li>
-                <a href="#locations" className="text-gray-300 hover:text-yellow-400 transition-colors">Platforms</a>
+                <a href="#locations" className="text-gray-300 hover:text-cyan-400 transition-colors">Platforms</a>
               </li>
               <li>
-                <a href="#contact" className="text-gray-300 hover:text-yellow-400 transition-colors">Contact</a>
+                <a href="#contact" className="text-gray-300 hover:text-cyan-400 transition-colors">Contact</a>
               </li>
             </ul>
           </div>
@@ -93,9 +93,9 @@ const Footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-yellow-500/30 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
+        <div className="border-t border-cyan-500/30 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
           <div className="text-gray-400 text-sm mb-4 md:mb-0">
-            © 2024 NASR APP. All rights reserved. Built in Saudi Arabia.
+            © 2024 Travoice. All rights reserved. Built in Saudi Arabia.
           </div>
           <div className="flex space-x-6">
             <a 

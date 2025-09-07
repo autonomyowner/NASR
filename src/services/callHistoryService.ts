@@ -27,8 +27,8 @@ export interface CallHistoryEntry {
 }
 
 class CallHistoryService {
-  private readonly CONTACTS_KEY = 'nasr_contacts'
-  private readonly HISTORY_KEY = 'nasr_call_history'
+  private readonly CONTACTS_KEY = 'travoice_contacts'
+  private readonly HISTORY_KEY = 'travoice_call_history'
 
   // Contacts Management
   getContacts(): Contact[] {

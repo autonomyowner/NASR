@@ -32,7 +32,7 @@ const Locations = () => {
             Platform <span className="premium-text">Availability</span>
           </h2>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            NASR APP is designed to be accessible across multiple platforms, ensuring you can communicate from anywhere, anytime.
+            Travoice is designed to be accessible across multiple platforms, ensuring you can communicate from anywhere, anytime.
           </p>
         </div>
 
@@ -86,7 +86,7 @@ const Locations = () => {
               {/* Map Link */}
               <a 
                 href={platform.url}
-                className="inline-flex items-center premium-text hover:text-yellow-300 transition-colors"
+                className="inline-flex items-center premium-text hover:text-cyan-300 transition-colors"
               >
                 <span className="mr-2"></span>
                 {platform.status === "Active" ? "Access Platform" : "Learn More"}
@@ -103,7 +103,7 @@ const Locations = () => {
           <div className="text-center">
             <h3 className="text-2xl font-bold text-white mb-4">Future Platforms</h3>
             <p className="text-gray-300 mb-6">
-              We're working on expanding NASR APP to more platforms and devices to ensure maximum accessibility.
+              We're working on expanding Travoice to more platforms and devices to ensure maximum accessibility.
             </p>
             <a 
               href="#contact" 

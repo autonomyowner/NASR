@@ -4,7 +4,7 @@ const About = () => {
       <div className="container-custom">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            About <span className="premium-text">NASR APP</span>
+            About <span className="premium-text">Travoice</span>
           </h2>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
             We're building the future of global communication - eliminating language barriers through 
@@ -43,7 +43,7 @@ const About = () => {
           {/* Right Content */}
           <div className="space-y-6">
             <div className="premium-gradient p-8 rounded-2xl shadow-2xl">
-              <h3 className="text-2xl font-bold text-slate-900 mb-4">Why Choose NASR APP?</h3>
+              <h3 className="text-2xl font-bold text-slate-900 mb-4">Why Choose Travoice?</h3>
               <ul className="space-y-3 text-slate-900">
                 <li className="flex items-center">
                   <span className="mr-3">✓</span>

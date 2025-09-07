@@ -2,6 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .animate-slide-in-right {
+    animation: slide-in-right 0.3s ease-out;
+  }
+  
+  .animation-delay-200 {
+    animation-delay: 200ms;
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes typewriter {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent; }
+  50% { border-color: #6EA294; }
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;
@@ -13,12 +44,34 @@
 }
 
 @layer components {
+  .display-font {
+    font-family: 'Playfair Display', serif;
+    letter-spacing: 0.01em;
+  }
+
+  .hero-surface {
+    @apply backdrop-blur-xl rounded-3xl shadow-2xl border;
+    background-image: radial-gradient(1000px 600px at -10% -10%, rgba(34,211,238,0.15), transparent),
+      radial-gradient(800px 500px at 110% 120%, rgba(34,211,238,0.12), transparent),
+      linear-gradient(to bottom right, rgba(15,23,42,0.6), rgba(20,83,45,0.35));
+    border-color: rgba(34,211,238,0.25);
+  }
+
+  .hero-grid-light {
+    background-color: #D3E3E0;
+    background-image: 
+      linear-gradient(rgba(74,108,92,0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(74,108,92,0.08) 1px, transparent 1px);
+    background-size: 24px 24px;
+    background-position: center;
+  }
+
   .btn-primary {
-    @apply bg-hive-yellow text-slate-900 font-semibold px-6 py-3 rounded-lg hover:bg-yellow-400 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl;
+    @apply bg-aqua-accent text-white font-semibold px-6 py-3 rounded-lg hover:bg-aqua-accent-hover transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl;
   }
   
   .btn-secondary {
-    @apply border-2 border-hive-yellow text-hive-yellow font-semibold px-6 py-3 rounded-lg hover:bg-hive-yellow hover:text-slate-900 transition-all duration-300 shadow-lg hover:shadow-xl;
+    @apply border-2 border-aqua-accent text-aqua-accent font-semibold px-6 py-3 rounded-lg hover:bg-aqua-accent hover:text-white transition-all duration-300 shadow-lg hover:shadow-xl;
   }
   
   .section-padding {
@@ -30,22 +83,22 @@
   }
 
   .premium-card {
-    @apply bg-slate-800/30 backdrop-blur-md border border-yellow-500/30 rounded-2xl shadow-2xl hover:shadow-yellow-500/20 transition-all duration-300 hover:border-yellow-500/50;
+    @apply bg-slate-800/30 backdrop-blur-md border border-cyan-500/30 rounded-2xl shadow-2xl hover:shadow-cyan-500/20 transition-all duration-300 hover:border-cyan-500/50;
   }
 
   .premium-gradient {
-    @apply bg-gradient-to-br from-yellow-500 to-yellow-400 text-slate-900;
+    @apply bg-gradient-to-br from-cyan-500 to-cyan-400 text-slate-900;
   }
 
   .glass-effect {
-    @apply bg-slate-900/20 backdrop-blur-md border border-yellow-500/20;
+    @apply bg-slate-900/20 backdrop-blur-md border border-cyan-400/25;
   }
 
   .premium-text {
-    @apply text-yellow-400 font-semibold;
+    @apply text-cyan-400 font-semibold;
   }
 
   .premium-border {
-    @apply border-yellow-500/30;
+    @apply border-cyan-500/30;
   }
 }

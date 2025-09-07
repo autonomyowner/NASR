@@ -2,11 +2,8 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import type { CallState, CallControls } from '../types/call'
 import { useCallQuality } from './useCallQuality'
 import { v4 as uuidv4 } from 'uuid'
-
-const ICE_SERVERS = [
-  { urls: 'stun:stun.l.google.com:19302' },
-  { urls: 'stun:stun1.l.google.com:19302' }
-]
+import { getConfig } from '../services/configService'
+import { signalingService } from '../services/signalingService'
 
 export const useWebRTC = (): CallState & CallControls => {
   const [callState, setCallState] = useState<CallState>({
@@ -24,6 +21,8 @@ export const useWebRTC = (): CallState & CallControls => {
   })
 
   const peerConnection = useRef<RTCPeerConnection | null>(null)
+  const remoteAudioRef = useRef<HTMLAudioElement | null>(null)
+  const currentPeerIdRef = useRef<string | null>(null)
   
   // Initialize call quality monitoring
   const callQuality = useCallQuality()
@@ -34,19 +33,26 @@ export const useWebRTC = (): CallState & CallControls => {
       peerConnection.current.close()
     }
 
-    peerConnection.current = new RTCPeerConnection({ iceServers: ICE_SERVERS })
+    const config = getConfig()
+    peerConnection.current = new RTCPeerConnection({ iceServers: config.iceServers })
 
     // Handle incoming remote stream
     peerConnection.current.ontrack = (event) => {
       const [remoteStream] = event.streams
       setCallState(prev => ({ ...prev, remoteStream }))
+      
+      // Play remote audio
+      if (!remoteAudioRef.current) {
+        remoteAudioRef.current = new Audio()
+        remoteAudioRef.current.autoplay = true
+      }
+      remoteAudioRef.current.srcObject = remoteStream
     }
 
     // Handle ICE candidates
     peerConnection.current.onicecandidate = (event) => {
-      if (event.candidate) {
-        // In a real app, send this via signaling server
-        console.log('ICE candidate:', event.candidate)
+      if (event.candidate && currentPeerIdRef.current) {
+        signalingService.sendIceCandidate(currentPeerIdRef.current, event.candidate)
       }
     }
 
@@ -70,6 +76,11 @@ export const useWebRTC = (): CallState & CallControls => {
   // Get user media (audio only for voice calls)
   const getUserMedia = useCallback(async (): Promise<MediaStream> => {
     try {
+      // Check if mediaDevices is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Your browser does not support microphone access.')
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
@@ -79,9 +90,22 @@ export const useWebRTC = (): CallState & CallControls => {
       })
       setCallState(prev => ({ ...prev, localStream: stream }))
       return stream
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error accessing microphone:', error)
-      throw new Error('Could not access microphone. Please check permissions.')
+      
+      let errorMessage = 'Could not access microphone.'
+      
+      if (error.name === 'NotFoundError') {
+        errorMessage = 'No microphone found. Please connect a microphone and try again.'
+      } else if (error.name === 'NotAllowedError') {
+        errorMessage = 'Microphone access denied. Please allow microphone access and try again.'
+      } else if (error.name === 'NotSupportedError') {
+        errorMessage = 'Your browser does not support microphone access.'
+      } else if (error.name === 'OverconstrainedError') {
+        errorMessage = 'Microphone constraints not supported. Please try with a different microphone.'
+      }
+      
+      throw new Error(errorMessage)
     }
   }, [])
 
@@ -89,6 +113,7 @@ export const useWebRTC = (): CallState & CallControls => {
   const startCall = useCallback(async (peerId: string) => {
     try {
       setCallState(prev => ({ ...prev, isConnecting: true, callId: uuidv4(), peerId }))
+      currentPeerIdRef.current = peerId
       
       initializePeerConnection()
       const localStream = await getUserMedia()
@@ -102,20 +127,22 @@ export const useWebRTC = (): CallState & CallControls => {
       const offer = await peerConnection.current!.createOffer()
       await peerConnection.current!.setLocalDescription(offer)
 
-      // In a real app, send offer via signaling server
-      console.log('Created offer:', offer)
+      // Send offer via signaling server
+      signalingService.sendCallRequest(peerId, offer)
       
     } catch (error) {
       console.error('Error starting call:', error)
       setCallState(prev => ({ ...prev, isConnecting: false }))
+      currentPeerIdRef.current = null
       throw error
     }
   }, [initializePeerConnection, getUserMedia])
 
-  // Answer a call
-  const answerCall = useCallback(async () => {
+  // Answer a call (now expects remote offer)
+  const answerCall = useCallback(async (fromPeerId: string, offer: RTCSessionDescriptionInit) => {
     try {
-      setCallState(prev => ({ ...prev, isConnecting: true }))
+      setCallState(prev => ({ ...prev, isConnecting: true, peerId: fromPeerId }))
+      currentPeerIdRef.current = fromPeerId
       
       initializePeerConnection()
       const localStream = await getUserMedia()
@@ -125,30 +152,96 @@ export const useWebRTC = (): CallState & CallControls => {
         peerConnection.current?.addTrack(track, localStream)
       })
 
-      // In a real app, this would be triggered by receiving an offer
-      // For now, we'll simulate it
-      console.log('Answering call...')
+      // Set remote offer and create answer
+      console.log('Setting remote description with offer:', offer)
+      await peerConnection.current!.setRemoteDescription(new RTCSessionDescription(offer))
+      const answer = await peerConnection.current!.createAnswer()
+      await peerConnection.current!.setLocalDescription(answer)
+
+      // Send answer via signaling server
+      signalingService.sendCallAnswer(fromPeerId, answer)
       
     } catch (error) {
       console.error('Error answering call:', error)
       setCallState(prev => ({ ...prev, isConnecting: false }))
+      currentPeerIdRef.current = null
       throw error
     }
   }, [initializePeerConnection, getUserMedia])
 
+  // Handle incoming call answer
+  const handleCallAnswer = useCallback(async (fromPeerId: string, answer: RTCSessionDescriptionInit) => {
+    try {
+      if (!peerConnection.current) {
+        console.error('No peer connection available')
+        return
+      }
+      
+      if (!answer || typeof answer !== 'object' || !answer.type || !answer.sdp) {
+        console.error('Invalid answer format:', answer)
+        return
+      }
+
+      console.log('Setting remote description with answer:', answer)
+      await peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer))
+    } catch (error) {
+      console.error('Error handling call answer:', error)
+    }
+  }, [])
+
+  // Handle incoming ICE candidate
+  const handleIceCandidate = useCallback(async (candidate: RTCIceCandidateInit) => {
+    try {
+      if (!peerConnection.current) {
+        console.error('No peer connection available for ICE candidate')
+        return
+      }
+
+      if (!peerConnection.current.remoteDescription) {
+        console.warn('Remote description not set, queueing ICE candidate')
+        // In a production app, you might want to queue these candidates
+        return
+      }
+
+      if (!candidate || (!candidate.candidate && candidate.candidate !== '')) {
+        console.error('Invalid ICE candidate:', candidate)
+        return
+      }
+
+      console.log('Adding ICE candidate:', candidate)
+      await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate))
+    } catch (error) {
+      console.error('Error adding ICE candidate:', error)
+    }
+  }, [])
+
   // End call
   const endCall = useCallback(() => {
+    // Notify remote peer
+    if (currentPeerIdRef.current) {
+      signalingService.endCall(currentPeerIdRef.current)
+    }
+
     // Stop call quality monitoring
     callQuality.stopMonitoring()
     
     // Stop all tracks
     callState.localStream?.getTracks().forEach(track => track.stop())
     
+    // Stop remote audio
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.pause()
+      remoteAudioRef.current.srcObject = null
+    }
+    
     // Close peer connection
     if (peerConnection.current) {
       peerConnection.current.close()
       peerConnection.current = null
     }
+
+    // Reset refs
+    currentPeerIdRef.current = null
 
     // Reset state
     setCallState({
@@ -199,6 +292,19 @@ export const useWebRTC = (): CallState & CallControls => {
     }
   }, [callQuality.metrics, callQuality.isMonitoring])
 
+  // Set up signaling service callbacks
+  useEffect(() => {
+    signalingService.onCallAnswered = handleCallAnswer
+    signalingService.onIceCandidate = handleIceCandidate
+    signalingService.onCallEnded = endCall
+
+    return () => {
+      signalingService.onCallAnswered = null
+      signalingService.onIceCandidate = null
+      signalingService.onCallEnded = null
+    }
+  }, [handleCallAnswer, handleIceCandidate, endCall])
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -213,6 +319,8 @@ export const useWebRTC = (): CallState & CallControls => {
     toggleMute,
     toggleTranslation,
     answerCall,
-    declineCall
+    declineCall,
+    handleCallAnswer,
+    handleIceCandidate
   }
 }

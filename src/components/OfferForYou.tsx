@@ -4,15 +4,15 @@ const OfferForYou = () => {
 
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-10 z-5">
-        <div className="absolute top-20 left-20 w-32 h-32 bg-yellow-500 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 right-20 w-40 h-40 bg-yellow-500 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-60 h-60 bg-yellow-500 rounded-full blur-3xl"></div>
+        <div className="absolute top-20 left-20 w-32 h-32 bg-cyan-500 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 right-20 w-40 h-40 bg-cyan-500 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-60 h-60 bg-cyan-500 rounded-full blur-3xl"></div>
       </div>
 
       <div className="container-custom text-center relative z-10">
         <div className="max-w-6xl mx-auto">
           {/* Badge */}
-          <div className="inline-flex items-center px-4 py-2 glass-effect border border-yellow-500/30 rounded-full premium-text text-sm font-medium mb-8">
+          <div className="inline-flex items-center px-4 py-2 glass-effect border border-cyan-500/30 rounded-full premium-text text-sm font-medium mb-8">
             <span className="mr-2"></span>
             Live Demo Available
           </div>
@@ -25,7 +25,7 @@ const OfferForYou = () => {
 
           {/* Subtitle */}
           <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-4xl mx-auto leading-relaxed">
-            See how NASR APP breaks language barriers in seconds, enabling seamless communication 
+            See how Travoice breaks language barriers in seconds, enabling seamless communication 
             between people speaking different languages anywhere in the world.
           </p>
 
@@ -84,7 +84,7 @@ const OfferForYou = () => {
 
           {/* Solution Section */}
           <div className="bg-green-900/20 border border-green-500/30 rounded-3xl p-8 mb-12">
-            <h2 className="text-3xl font-bold text-white mb-6">The Solution: NASR APP Innovation</h2>
+            <h2 className="text-3xl font-bold text-white mb-6">The Solution: Travoice Innovation</h2>
             <div className="grid md:grid-cols-2 gap-6 text-left">
               <div className="space-y-4">
                 <div className="flex items-start space-x-4">
@@ -136,7 +136,7 @@ const OfferForYou = () => {
           </div>
 
           {/* Revenue Projection */}
-          <div className="bg-slate-800/30 backdrop-blur-md border border-yellow-500/30 rounded-3xl p-8 mb-12">
+          <div className="bg-slate-800/30 backdrop-blur-md border border-cyan-500/30 rounded-3xl p-8 mb-12">
             <h2 className="text-3xl font-bold text-white text-center mb-8">Performance Metrics: The Technology</h2>
             <div className="grid md:grid-cols-3 gap-8">
               <div className="text-center">
@@ -152,7 +152,7 @@ const OfferForYou = () => {
                 <div className="text-gray-400">Supported Languages</div>
               </div>
             </div>
-            <div className="mt-8 p-6 bg-yellow-500/10 border border-yellow-500/30 rounded-2xl">
+            <div className="mt-8 p-6 bg-cyan-500/10 border border-cyan-500/30 rounded-2xl">
               <div className="text-center">
                 <div className="text-5xl font-bold premium-text mb-2">Real-Time</div>
                 <div className="text-gray-300 text-lg">Processing Speed</div>
@@ -162,8 +162,8 @@ const OfferForYou = () => {
           </div>
 
           {/* Our Offer */}
-          <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 rounded-3xl p-8 mb-12">
-            <h2 className="text-3xl font-bold text-white text-center mb-8">What NASR APP Delivers</h2>
+          <div className="bg-gradient-to-r from-cyan-500/20 to-cyan-400/20 border border-cyan-500/30 rounded-3xl p-8 mb-12">
+            <h2 className="text-3xl font-bold text-white text-center mb-8">What Travoice Delivers</h2>
             <div className="grid md:grid-cols-2 gap-8">
               <div className="space-y-6">
                 <div className="premium-card p-6">
@@ -209,7 +209,7 @@ const OfferForYou = () => {
           </div>
 
           {/* Investment Section */}
-          <div className="bg-slate-800/30 backdrop-blur-md border border-yellow-500/30 rounded-3xl p-8 mb-12">
+          <div className="bg-slate-800/30 backdrop-blur-md border border-cyan-500/30 rounded-3xl p-8 mb-12">
             <h2 className="text-3xl font-bold text-white text-center mb-8">Join the Beta Program</h2>
             <div className="grid md:grid-cols-2 gap-8">
               <div className="text-center">
@@ -235,7 +235,7 @@ const OfferForYou = () => {
 
           {/* Urgency Section */}
           <div className="bg-red-900/20 border border-red-500/30 rounded-3xl p-8 mb-12">
-            <h2 className="text-3xl font-bold text-white text-center mb-6">Why Experience NASR APP Now?</h2>
+            <h2 className="text-3xl font-bold text-white text-center mb-6">Why Experience Travoice Now?</h2>
             <div className="grid md:grid-cols-3 gap-6">
               <div className="text-center">
                 <div className="text-4xl mb-4"></div>
@@ -260,7 +260,7 @@ const OfferForYou = () => {
             <h3 className="text-3xl font-bold text-white mb-6">Ready to Break Language Barriers?</h3>
             <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
               Experience the future of communication today. Join thousands who are already connecting 
-              across languages with NASR APP's revolutionary technology.
+              across languages with Travoice's revolutionary technology.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a 
