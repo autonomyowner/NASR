@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import type { CallState, CallControls } from '../types/call'
 import { useCallQuality } from './useCallQuality'
+import { useAudioSettings } from './useAudioSettings'
 import { v4 as uuidv4 } from 'uuid'
 import { getConfig } from '../services/configService'
 import { signalingService } from '../services/signalingService'
@@ -11,10 +12,12 @@ export const useWebRTC = (): CallState & CallControls => {
     isConnecting: false,
     isMuted: false,
     isTranslationEnabled: false,
+    isDelayEnabled: false,
     localStream: null,
     remoteStream: null,
     callId: null,
     peerId: null,
+    peerConnection: null,
     qualityMetrics: undefined,
     qualityScore: 0,
     qualityText: 'Unknown'
@@ -23,9 +26,11 @@ export const useWebRTC = (): CallState & CallControls => {
   const peerConnection = useRef<RTCPeerConnection | null>(null)
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null)
   const currentPeerIdRef = useRef<string | null>(null)
+  const delayTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
-  // Initialize call quality monitoring
+  // Initialize call quality monitoring and audio settings
   const callQuality = useCallQuality()
+  const audioSettings = useAudioSettings()
 
   // Initialize peer connection
   const initializePeerConnection = useCallback(() => {
@@ -35,18 +40,33 @@ export const useWebRTC = (): CallState & CallControls => {
 
     const config = getConfig()
     peerConnection.current = new RTCPeerConnection({ iceServers: config.iceServers })
+    
+    // Update state with the new peer connection
+    setCallState(prev => ({ ...prev, peerConnection: peerConnection.current }))
 
     // Handle incoming remote stream
     peerConnection.current.ontrack = (event) => {
       const [remoteStream] = event.streams
       setCallState(prev => ({ ...prev, remoteStream }))
       
-      // Play remote audio
-      if (!remoteAudioRef.current) {
-        remoteAudioRef.current = new Audio()
-        remoteAudioRef.current.autoplay = true
+      // Handle delay if enabled
+      if (callState.isDelayEnabled) {
+        // Delay the audio by 10 seconds
+        delayTimeoutRef.current = setTimeout(() => {
+          if (!remoteAudioRef.current) {
+            remoteAudioRef.current = new Audio()
+            remoteAudioRef.current.autoplay = true
+          }
+          remoteAudioRef.current.srcObject = remoteStream
+        }, 10000)
+      } else {
+        // Play remote audio immediately
+        if (!remoteAudioRef.current) {
+          remoteAudioRef.current = new Audio()
+          remoteAudioRef.current.autoplay = true
+        }
+        remoteAudioRef.current.srcObject = remoteStream
       }
-      remoteAudioRef.current.srcObject = remoteStream
     }
 
     // Handle ICE candidates
@@ -71,7 +91,7 @@ export const useWebRTC = (): CallState & CallControls => {
         endCall()
       }
     }
-  }, [])
+  }, [callState.isDelayEnabled])
 
   // Get user media (audio only for voice calls)
   const getUserMedia = useCallback(async (): Promise<MediaStream> => {
@@ -81,13 +101,8 @@ export const useWebRTC = (): CallState & CallControls => {
         throw new Error('Your browser does not support microphone access.')
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        }
-      })
+      // Use audio settings for optimal constraints
+      const stream = await audioSettings.createMediaStream()
       setCallState(prev => ({ ...prev, localStream: stream }))
       return stream
     } catch (error: any) {
@@ -107,7 +122,7 @@ export const useWebRTC = (): CallState & CallControls => {
       
       throw new Error(errorMessage)
     }
-  }, [])
+  }, [audioSettings])
 
   // Start a call
   const startCall = useCallback(async (peerId: string) => {
@@ -217,6 +232,12 @@ export const useWebRTC = (): CallState & CallControls => {
 
   // End call
   const endCall = useCallback(() => {
+    // Clear delay timeout if exists
+    if (delayTimeoutRef.current) {
+      clearTimeout(delayTimeoutRef.current)
+      delayTimeoutRef.current = null
+    }
+
     // Notify remote peer
     if (currentPeerIdRef.current) {
       signalingService.endCall(currentPeerIdRef.current)
@@ -249,10 +270,12 @@ export const useWebRTC = (): CallState & CallControls => {
       isConnecting: false,
       isMuted: false,
       isTranslationEnabled: false,
+      isDelayEnabled: false,
       localStream: null,
       remoteStream: null,
       callId: null,
       peerId: null,
+      peerConnection: null,
       qualityMetrics: undefined,
       qualityScore: 0,
       qualityText: 'Unknown'
@@ -279,6 +302,36 @@ export const useWebRTC = (): CallState & CallControls => {
   const toggleTranslation = useCallback(() => {
     setCallState(prev => ({ ...prev, isTranslationEnabled: !prev.isTranslationEnabled }))
   }, [])
+
+  // Toggle delay
+  const toggleDelay = useCallback(() => {
+    setCallState(prev => ({ ...prev, isDelayEnabled: !prev.isDelayEnabled }))
+    
+    // If we're currently in a call and toggling delay, we need to reinitialize the connection
+    if (callState.isCallActive) {
+      // Clear any existing delay timeout
+      if (delayTimeoutRef.current) {
+        clearTimeout(delayTimeoutRef.current)
+        delayTimeoutRef.current = null
+      }
+      
+      // Apply or remove delay to current remote stream
+      if (callState.remoteStream && remoteAudioRef.current) {
+        if (!callState.isDelayEnabled) {
+          // We're enabling delay - add 10 second delay
+          remoteAudioRef.current.srcObject = null
+          delayTimeoutRef.current = setTimeout(() => {
+            if (remoteAudioRef.current && callState.remoteStream) {
+              remoteAudioRef.current.srcObject = callState.remoteStream
+            }
+          }, 10000)
+        } else {
+          // We're disabling delay - play immediately
+          remoteAudioRef.current.srcObject = callState.remoteStream
+        }
+      }
+    }
+  }, [callState.isCallActive, callState.remoteStream, callState.isDelayEnabled])
 
   // Update call state with quality metrics
   useEffect(() => {
@@ -308,6 +361,9 @@ export const useWebRTC = (): CallState & CallControls => {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      if (delayTimeoutRef.current) {
+        clearTimeout(delayTimeoutRef.current)
+      }
       endCall()
     }
   }, [])
@@ -318,6 +374,7 @@ export const useWebRTC = (): CallState & CallControls => {
     endCall,
     toggleMute,
     toggleTranslation,
+    toggleDelay,
     answerCall,
     declineCall,
     handleCallAnswer,

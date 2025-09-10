@@ -12,6 +12,7 @@ import CallTimer from './CallTimer'
 import NotificationContainer from './NotificationContainer'
 import MicrophoneStatus from './MicrophoneStatus'
 import WebRTCDebug from './WebRTCDebug'
+import RoomManager from './RoomManager'
 
 const Call = () => {
   const [peerId, setPeerId] = useState('')
@@ -19,6 +20,10 @@ const Call = () => {
   const [showTranscript, setShowTranscript] = useState(true)
   const [showHistory, setShowHistory] = useState(false)
   const [showContacts, setShowContacts] = useState(false)
+  
+  // Room management state
+  const [roomId, setRoomId] = useState<string | null>(null)
+  const [isInRoom, setIsInRoom] = useState(false)
 
   const webRTC = useWebRTC()
   const translatedSpeech = useTranslatedSpeech(selectedLanguage)
@@ -86,6 +91,31 @@ const Call = () => {
       signalingService.onUserBusy = null
     }
   }, [])
+
+  // Room management functions
+  const handleCreateRoom = (_source: string, target: string) => {
+    const newRoomId = `room-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    setRoomId(newRoomId)
+    setSelectedLanguage(target)
+    setIsInRoom(true)
+    notifications.success('Room Created', `Room ID: ${newRoomId}`)
+  }
+
+  const handleJoinRoom = (id: string, _source: string, target: string) => {
+    setRoomId(id)
+    setSelectedLanguage(target)
+    setIsInRoom(true)
+    notifications.success('Joined Room', `Connected to room: ${id}`)
+  }
+
+  const handleLeaveRoom = () => {
+    if (webRTC.isCallActive) {
+      webRTC.endCall()
+    }
+    setRoomId(null)
+    setIsInRoom(false)
+    notifications.info('Left Room', 'You have left the translation room')
+  }
 
   // Connection status notifications
   useEffect(() => {
@@ -159,15 +189,48 @@ const Call = () => {
       {/* Content Container */}
       <div className="relative z-10">
         <div className="container-custom">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              Voice Call with <span className="premium-text">Real-time Translation</span>
-            </h2>
-            <p className="text-gray-300 text-lg max-w-2xl mx-auto">
-              Connect with people around the world and break language barriers with Travoice's 
-              real-time voice translation technology.
-            </p>
-          </div>
+          {!isInRoom ? (
+            // Show Room Manager when not in a room
+            <div>
+              <div className="text-center mb-16">
+                <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+                  Voice Call with <span className="premium-text">Real-time Translation</span>
+                </h2>
+                <p className="text-gray-300 text-lg max-w-2xl mx-auto">
+                  Connect with people around the world and break language barriers with instant translation
+                </p>
+              </div>
+              <RoomManager 
+                onCreateRoom={handleCreateRoom}
+                onJoinRoom={handleJoinRoom}
+              />
+            </div>
+          ) : (
+            // Show existing interface when in a room
+            <div>
+              <div className="text-center mb-8">
+                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                  Translation Room: <span className="premium-text">{roomId}</span>
+                </h2>
+                <div className="flex justify-center items-center gap-4 text-slate-300 mb-4">
+                  <span>Language: {selectedLanguage}</span>
+                  <button
+                    onClick={handleLeaveRoom}
+                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm transition-colors"
+                  >
+                    Leave Room
+                  </button>
+                </div>
+              </div>
+              <div className="text-center mb-16">
+                <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+                  Voice Call with <span className="premium-text">Real-time Translation</span>
+                </h2>
+                <p className="text-gray-300 text-lg max-w-2xl mx-auto">
+                  Connect with people around the world and break language barriers with Travoice's 
+                  real-time voice translation technology.
+                </p>
+              </div>
 
           {!webRTC.isCallActive ? (
             <div className="max-w-6xl mx-auto space-y-8">
@@ -589,7 +652,19 @@ const Call = () => {
                           : 'bg-gray-500 text-white'
                       }`}
                     >
-                      {webRTC.isTranslationEnabled ? '🌐 Translation: ON' : '🌐 Translation: OFF'}
+                      {webRTC.isTranslationEnabled ? '🌐 Translation ON' : '📞 Normal Voice Call'}
+                    </button>
+
+                    {/* 10-Second Delay Toggle */}
+                    <button
+                      onClick={webRTC.toggleDelay}
+                      className={`w-full p-3 rounded-lg font-medium transition-colors ${
+                        webRTC.isDelayEnabled 
+                          ? 'bg-orange-500 text-white' 
+                          : 'bg-gray-500 text-white'
+                      }`}
+                    >
+                      {webRTC.isDelayEnabled ? '⏰ Delay: ON (10s)' : '⏰ Delay: OFF'}
                     </button>
 
                     {/* Transcript Toggle */}
@@ -700,6 +775,8 @@ const Call = () => {
                   </div>
                 )}
               </div>
+            </div>
+          )}
             </div>
           )}
         </div>

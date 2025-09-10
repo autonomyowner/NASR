@@ -1,0 +1,191 @@
+# LiveKit Server Configuration
+# Optimized for real-time translation with low latency
+
+port: 7880
+bind_addresses:
+  - ""
+
+# API Configuration
+api:
+  api_key: ${LIVEKIT_API_KEY}
+  secret_key: ${LIVEKIT_SECRET_KEY}
+
+# Room Configuration
+room:
+  # Enable room auto-creation
+  auto_create: true
+  
+  # Default room settings
+  default_settings:
+    # Maximum participants per room
+    max_participants: 20
+    
+    # Room timeout (24 hours)
+    empty_timeout: 86400s
+    departure_timeout: 20s
+    
+    # Enable adaptive stream allocation
+    adaptive_stream: true
+
+# RTC Configuration (WebRTC)
+rtc:
+  # UDP port range for media
+  port_range_start: 50000
+  port_range_end: 60000
+  
+  # Use mux for single port operation
+  use_ice_lite: false
+  
+  # STUN/TURN configuration
+  stun_servers:
+    - stun:stun.l.google.com:19302
+    - stun:stun1.l.google.com:19302
+    
+  turn_servers:
+    - host: ${TURN_SERVER_HOST:-localhost}
+      port: 3478
+      protocol: udp
+      username: ${TURN_USERNAME}
+      credential: ${TURN_CREDENTIAL}
+      
+  # ICE configuration for NAT traversal
+  ice:
+    # Prefer UDP for lower latency
+    prefer_udp: true
+    # Host candidates
+    include_loopback: true
+    
+  # Optimize for low latency
+  congestion_control:
+    # Enable adaptive bitrate
+    adaptive_bitrate: true
+    # Conservative initial bitrate to avoid congestion
+    initial_bitrate: 300000  # 300 kbps
+    max_bitrate: 2000000     # 2 Mbps
+    min_bitrate: 64000       # 64 kbps
+
+# Audio Configuration
+audio:
+  # Audio codec preferences (Opus for low latency)
+  codecs:
+    - opus
+    
+  # Opus-specific settings for low latency
+  opus:
+    # Optimize for low latency (20ms frames)
+    frame_duration: 20ms
+    # Enable DTX (discontinuous transmission) for efficiency
+    dtx: true
+    # Moderate bitrate for good quality vs latency balance
+    bitrate: 32000
+    
+  # Audio processing
+  processing:
+    # Enable audio level indication for VAD
+    audio_level_indication: true
+    # Noise suppression
+    noise_suppression: true
+    # Echo cancellation
+    echo_cancellation: true
+    # Auto gain control
+    auto_gain_control: true
+
+# Video Configuration (disabled for audio-only translation)
+video:
+  # Disable video processing to reduce CPU usage
+  enabled: false
+
+# Redis Configuration for scaling (optional)
+redis:
+  address: ${REDIS_URL:-redis://localhost:6379}
+  db: 0
+  
+# Node Configuration
+node:
+  # Node IP for clustering (single node setup)
+  ip: ${NODE_IP:-127.0.0.1}
+  
+# Webhook Configuration
+webhook:
+  # Webhook URLs for room events
+  urls:
+    - ${WEBHOOK_URL}
+  api_key: ${LIVEKIT_API_KEY}
+
+# Logging Configuration
+logging:
+  # Log level
+  level: info
+  # Structured JSON logging
+  json: true
+  # Log sampling to reduce volume
+  sample: true
+
+# Development settings
+development:
+  # Disable in production
+  disable_strict_config: false
+  
+# Performance tuning
+performance:
+  # CPU optimization
+  num_cpus: 0  # Use all available CPUs
+  
+  # Memory limits
+  memory_limit: 2GB
+  
+  # Connection limits
+  max_connections_per_ip: 50
+  max_rooms_per_node: 100
+
+# Security Configuration
+security:
+  # Enable strict JWT validation
+  strict_jwt: true
+  
+  # Rate limiting
+  rate_limit:
+    enabled: true
+    requests_per_minute: 1000
+    
+  # CORS settings
+  cors:
+    allow_origins: 
+      - "https://localhost:3000"
+      - "https://*.thehive.app"
+    allow_headers:
+      - "Authorization"
+      - "Content-Type"
+      - "x-lk-*"
+
+# Health check configuration
+health:
+  port: 8080
+  path: /health
+
+# Metrics and monitoring
+metrics:
+  # Prometheus metrics
+  prometheus:
+    enabled: true
+    port: 9090
+    path: /metrics
+    
+  # Enable detailed metrics
+  detailed: true
+
+# Signal relay configuration for translator workers
+signal_relay:
+  # Enable data channel messaging for captions
+  data_channels: true
+  
+  # Stream forking for translator workers
+  stream_tracker:
+    enabled: true
+    
+# Egress configuration for recording (optional)
+egress:
+  # Enable file egress
+  file_output: true
+  # Output directory
+  output_dir: /data/recordings

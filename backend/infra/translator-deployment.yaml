@@ -1,0 +1,421 @@
+# Translator Worker Co-location Strategy
+# Kubernetes deployment configuration for optimal audio routing
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: translator-worker-config
+  namespace: thehive-sfu
+data:
+  # Co-location strategy configuration
+  COLOCATION_STRATEGY: "node-affinity"
+  WORKER_ASSIGNMENT_ALGORITHM: "least-loaded"
+  MAX_WORKERS_PER_NODE: "2"
+  
+  # Audio routing optimization
+  ENABLE_DIRECT_AUDIO_FORWARDING: "true"
+  ZERO_COPY_FORWARDING: "true"
+  AUDIO_BUFFER_SIZE_MS: "20"
+  
+  # Translation pipeline settings
+  TARGET_LANGUAGES: "es,fr,de,it,pt,ar,zh,ja,ko,ru"
+  STT_CHUNK_SIZE_MS: "250"
+  TRANSLATION_CONTEXT_LENGTH: "512"
+  
+  # Performance optimization
+  DEDICATED_CPU_CORES: "1"
+  MEMORY_LIMIT: "512Mi"
+  GPU_ACCELERATION: "true"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: translator-worker-pool
+  namespace: thehive-sfu
+  labels:
+    app: translator-worker
+    component: translation-pipeline
+spec:
+  replicas: 3  # Start with 3 workers, scale based on demand
+  
+  selector:
+    matchLabels:
+      app: translator-worker
+      
+  template:
+    metadata:
+      labels:
+        app: translator-worker
+        component: translation-pipeline
+      annotations:
+        # Prometheus monitoring
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+        
+    spec:
+      # Co-location with LiveKit SFU nodes
+      affinity:
+        podAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: livekit-sfu
+              topologyKey: kubernetes.io/hostname
+              
+        # Anti-affinity to distribute workers
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 50
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: translator-worker
+              topologyKey: kubernetes.io/hostname
+      
+      # Node selection for GPU nodes
+      nodeSelector:
+        node-type: "gpu-enabled"
+        
+      # Resource requirements
+      containers:
+      - name: translator-worker
+        image: thehive/translator-worker:latest
+        
+        resources:
+          requests:
+            cpu: "1000m"          # 1 CPU core
+            memory: "512Mi"       # 512MB RAM
+            nvidia.com/gpu: "1"   # 1 GPU unit
+          limits:
+            cpu: "2000m"          # Max 2 CPU cores
+            memory: "1Gi"         # Max 1GB RAM
+            nvidia.com/gpu: "1"   # 1 GPU unit
+            
+        # Environment configuration
+        envFrom:
+        - configMapRef:
+            name: translator-worker-config
+        - secretRef:
+            name: livekit-credentials
+            
+        env:
+        # Dynamic worker ID based on pod name
+        - name: WORKER_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+              
+        # Node information for co-location optimization
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+              
+        # Pod IP for direct communication
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+              
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        - containerPort: 9090
+          name: metrics
+          protocol: TCP
+          
+        # Health checks
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+          
+        # Volume mounts for model caching
+        volumeMounts:
+        - name: model-cache
+          mountPath: /app/models
+          
+        # Security context
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+            
+      # Volumes
+      volumes:
+      - name: model-cache
+        persistentVolumeClaim:
+          claimName: translator-model-cache
+          
+      # Service account for RBAC
+      serviceAccountName: translator-worker
+      
+      # Pod disruption budget
+      terminationGracePeriodSeconds: 60
+
+---
+# Horizontal Pod Autoscaler for dynamic scaling
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: translator-worker-hpa
+  namespace: thehive-sfu
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: translator-worker-pool
+    
+  minReplicas: 2    # Minimum 2 workers
+  maxReplicas: 10   # Maximum 10 workers
+  
+  # Scaling metrics
+  metrics:
+  # CPU utilization
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+        
+  # Memory utilization  
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+        
+  # Custom metrics for translation workload
+  - type: Object
+    object:
+      metric:
+        name: active_translation_sessions
+      target:
+        type: AverageValue
+        averageValue: "5"  # Scale up when >5 sessions per worker
+        
+  # Scaling behavior
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300  # Wait 5 minutes before scaling down
+      policies:
+      - type: Percent
+        value: 25  # Scale down by max 25% of current replicas
+        periodSeconds: 60
+        
+    scaleUp:
+      stabilizationWindowSeconds: 30   # Scale up quickly (30 seconds)
+      policies:
+      - type: Percent
+        value: 50  # Scale up by max 50% of current replicas
+        periodSeconds: 30
+
+---
+# Service for translator worker discovery
+apiVersion: v1
+kind: Service
+metadata:
+  name: translator-worker-service
+  namespace: thehive-sfu
+  labels:
+    app: translator-worker
+spec:
+  selector:
+    app: translator-worker
+    
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+    protocol: TCP
+    
+  type: ClusterIP
+
+---
+# Persistent Volume Claim for model caching
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: translator-model-cache
+  namespace: thehive-sfu
+spec:
+  accessModes:
+  - ReadWriteMany
+  
+  resources:
+    requests:
+      storage: 10Gi  # 10GB for model storage
+      
+  storageClassName: fast-ssd
+
+---
+# ServiceAccount and RBAC for worker management
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: translator-worker
+  namespace: thehive-sfu
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: translator-worker-role
+  namespace: thehive-sfu
+rules:
+# Allow reading pod information for co-location optimization
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+  
+# Allow reading services for discovery
+- apiGroups: [""]
+  resources: ["services", "endpoints"]
+  verbs: ["get", "list", "watch"]
+  
+# Allow reading configmaps and secrets
+- apiGroups: [""]
+  resources: ["configmaps", "secrets"]
+  verbs: ["get", "list"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: translator-worker-binding
+  namespace: thehive-sfu
+subjects:
+- kind: ServiceAccount
+  name: translator-worker
+  namespace: thehive-sfu
+roleRef:
+  kind: Role
+  name: translator-worker-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# Pod Disruption Budget to ensure availability during updates
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: translator-worker-pdb
+  namespace: thehive-sfu
+spec:
+  minAvailable: 50%  # Always keep at least 50% of workers running
+  selector:
+    matchLabels:
+      app: translator-worker
+
+---
+# Network Policy for secure communication
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: translator-worker-netpol
+  namespace: thehive-sfu
+spec:
+  podSelector:
+    matchLabels:
+      app: translator-worker
+      
+  policyTypes:
+  - Ingress
+  - Egress
+  
+  # Ingress rules
+  ingress:
+  # Allow health checks from kube-system
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: TCP
+      port: 8080
+      
+  # Allow metrics scraping from monitoring namespace
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 9090
+      
+  # Allow communication from LiveKit SFU pods
+  - from:
+    - podSelector:
+        matchLabels:
+          app: livekit-sfu
+    ports:
+    - protocol: TCP
+      port: 8080
+      
+  # Egress rules  
+  egress:
+  # Allow DNS resolution
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+      
+  # Allow communication with LiveKit SFU
+  - to:
+    - podSelector:
+        matchLabels:
+          app: livekit-sfu
+    ports:
+    - protocol: TCP
+      port: 7880
+    - protocol: TCP
+      port: 7881
+      
+  # Allow communication with translation services
+  - to:
+    - podSelector:
+        matchLabels:
+          component: translation-service
+    ports:
+    - protocol: TCP
+      port: 8000  # STT
+    - protocol: TCP  
+      port: 8001  # MT
+    - protocol: TCP
+      port: 8002  # TTS
+      
+  # Allow communication with Redis
+  - to:
+    - podSelector:
+        matchLabels:
+          app: redis
+    ports:
+    - protocol: TCP
+      port: 6379

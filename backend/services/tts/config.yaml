@@ -1,0 +1,133 @@
+# TTS Service Configuration
+# Production-ready settings for The HIVE translation pipeline
+
+service:
+  name: "hive-tts-service"
+  version: "2.0.0"
+  host: "0.0.0.0"
+  port: 8003
+  workers: 4
+  max_connections: 100
+  
+# Performance settings
+performance:
+  target_ttft_ms: 250
+  max_text_length: 10000
+  chunk_size_ms: 100
+  enable_early_stopping: true
+  gpu_memory_fraction: 0.8
+  enable_mixed_precision: true
+
+# Engine configurations
+engines:
+  xtts:
+    enabled: true
+    model_name: "tts_models/multilingual/multi-dataset/xtts_v2"
+    device: "cuda"
+    max_workers: 2
+    chunk_length: 100
+    temperature: 0.7
+    enable_cloning: true
+    
+  piper:
+    enabled: true
+    models_dir: "/app/models/piper"
+    device: "cpu"
+    quality_preset: "medium"
+    enable_streaming: true
+    
+  speecht5:
+    enabled: true
+    model_name: "microsoft/speecht5_tts"
+    vocoder_name: "microsoft/speecht5_hifigan"
+    device: "cuda"
+    speaker_embeddings_dim: 512
+    
+  kokoro:
+    enabled: false  # Placeholder for future implementation
+    model_path: "/app/models/kokoro"
+    device: "cuda"
+    streaming_chunk_ms: 40
+    
+  edge_tts:
+    enabled: true
+    rate_limit_per_minute: 100
+    timeout_seconds: 30
+    fallback_voice: "en-US-AriaNeural"
+
+# Voice library configuration
+voices:
+  auto_select_best: true
+  enable_voice_cloning: true
+  clone_cache_ttl_hours: 24
+  quality_tiers:
+    - "fast"      # <150ms TTFT, basic quality
+    - "standard"  # <250ms TTFT, good quality  
+    - "premium"   # <400ms TTFT, best quality
+  
+  # Default voices per language
+  defaults:
+    en: "en-us-female-premium"
+    es: "es-mx-female-premium"
+    fr: "fr-fr-female-premium"
+    de: "de-de-female-premium"
+    it: "it-it-female-premium"
+    pt: "pt-br-female-premium"
+    ja: "ja-jp-female-premium"
+    ko: "ko-kr-female-standard"
+    ar: "ar-sa-male-standard"
+    ru: "ru-ru-female-standard"
+
+# Audio processing
+audio:
+  sample_rate: 16000
+  channels: 1
+  format: "pcm16"
+  enable_noise_reduction: true
+  enable_normalization: true
+  volume_boost_db: 0
+  quality_threshold: 2.5
+
+# Caching configuration
+cache:
+  redis_url: "redis://redis:6379"
+  voice_embeddings_ttl_hours: 168  # 1 week
+  model_cache_ttl_hours: 24
+  audio_cache_enabled: false  # Disable for real-time synthesis
+  
+# Monitoring and observability
+monitoring:
+  prometheus_enabled: true
+  metrics_port: 9090
+  jaeger_enabled: true
+  jaeger_endpoint: "http://jaeger:14268/api/traces"
+  log_level: "INFO"
+  
+  # SLA targets
+  sla:
+    ttft_p95_ms: 250
+    synthesis_p95_seconds: 2.0
+    availability_percent: 99.5
+    error_rate_percent: 0.1
+
+# Health checks
+health:
+  check_interval_seconds: 30
+  model_warmup_enabled: true
+  gpu_memory_check: true
+  redis_connectivity: true
+
+# Security
+security:
+  enable_rate_limiting: true
+  max_requests_per_minute: 1000
+  max_text_length: 10000
+  allowed_origins: ["*"]
+  enable_cors: true
+
+# Development settings
+development:
+  debug_mode: false
+  enable_profiling: false
+  model_download_on_start: true
+  validate_audio_output: true

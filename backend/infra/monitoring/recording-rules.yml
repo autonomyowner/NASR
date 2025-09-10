@@ -1,0 +1,237 @@
+# Recording Rules for The HIVE Translation System
+# Pre-computed metrics for efficient SLO monitoring and dashboards
+
+groups:
+  - name: translation_pipeline_slo_metrics
+    interval: 30s
+    rules:
+      # Time-to-First-Token (TTFT) SLO metrics
+      - record: hive:translation:ttft_p95_5m
+        expr: histogram_quantile(0.95, rate(translation_ttft_duration_seconds_bucket[5m]))
+        labels:
+          slo: ttft
+          
+      - record: hive:translation:ttft_p99_5m
+        expr: histogram_quantile(0.99, rate(translation_ttft_duration_seconds_bucket[5m]))
+        labels:
+          slo: ttft
+          
+      - record: hive:translation:ttft_p50_5m
+        expr: histogram_quantile(0.50, rate(translation_ttft_duration_seconds_bucket[5m]))
+        labels:
+          slo: ttft
+
+      # Caption Latency SLO metrics
+      - record: hive:translation:caption_latency_p95_5m
+        expr: histogram_quantile(0.95, rate(caption_latency_seconds_bucket[5m]))
+        labels:
+          slo: caption_latency
+          
+      - record: hive:translation:caption_latency_p99_5m
+        expr: histogram_quantile(0.99, rate(caption_latency_seconds_bucket[5m]))
+        labels:
+          slo: caption_latency
+
+      # Word Retraction Rate SLO metrics
+      - record: hive:translation:word_retraction_rate_5m
+        expr: rate(word_retractions_total[5m]) / rate(words_total[5m]) * 100
+        labels:
+          slo: retraction_rate
+          
+      - record: hive:translation:word_retraction_rate_1h
+        expr: rate(word_retractions_total[1h]) / rate(words_total[1h]) * 100
+        labels:
+          slo: retraction_rate
+
+      # Overall SLO compliance
+      - record: hive:slo:ttft_compliant
+        expr: hive:translation:ttft_p95_5m <= 0.45
+        labels:
+          slo: ttft
+          target: "450ms"
+          
+      - record: hive:slo:caption_latency_compliant
+        expr: hive:translation:caption_latency_p95_5m <= 0.25
+        labels:
+          slo: caption_latency
+          target: "250ms"
+          
+      - record: hive:slo:retraction_rate_compliant
+        expr: hive:translation:word_retraction_rate_5m < 5
+        labels:
+          slo: retraction_rate
+          target: "5%"
+
+  - name: service_performance_metrics
+    interval: 15s
+    rules:
+      # Service request rates
+      - record: hive:service:request_rate_5m
+        expr: rate(http_requests_total[5m])
+        
+      - record: hive:service:request_rate_1h
+        expr: rate(http_requests_total[1h])
+
+      # Service error rates
+      - record: hive:service:error_rate_5m
+        expr: rate(http_requests_total{status_code=~"5.."}[5m]) / rate(http_requests_total[5m]) * 100
+        
+      - record: hive:service:error_rate_1h
+        expr: rate(http_requests_total{status_code=~"5.."}[1h]) / rate(http_requests_total[1h]) * 100
+
+      # Service response time percentiles
+      - record: hive:service:response_time_p95_5m
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))
+        
+      - record: hive:service:response_time_p99_5m
+        expr: histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))
+        
+      - record: hive:service:response_time_p50_5m
+        expr: histogram_quantile(0.50, rate(http_request_duration_seconds_bucket[5m]))
+
+      # Service availability 
+      - record: hive:service:availability_5m
+        expr: avg_over_time(up[5m])
+        
+      - record: hive:service:availability_1h
+        expr: avg_over_time(up[1h])
+
+  - name: pipeline_stage_metrics
+    interval: 15s
+    rules:
+      # STT service performance
+      - record: hive:stt:processing_time_p95_5m
+        expr: histogram_quantile(0.95, rate(stt_processing_duration_seconds_bucket[5m]))
+        
+      - record: hive:stt:processing_time_p99_5m
+        expr: histogram_quantile(0.99, rate(stt_processing_duration_seconds_bucket[5m]))
+        
+      - record: hive:stt:request_rate_5m
+        expr: rate(stt_processing_duration_seconds_count[5m])
+
+      # MT service performance
+      - record: hive:mt:processing_time_p95_5m
+        expr: histogram_quantile(0.95, rate(mt_processing_duration_seconds_bucket[5m]))
+        
+      - record: hive:mt:processing_time_p99_5m
+        expr: histogram_quantile(0.99, rate(mt_processing_duration_seconds_bucket[5m]))
+        
+      - record: hive:mt:request_rate_5m
+        expr: rate(mt_processing_duration_seconds_count[5m])
+        
+      - record: hive:mt:confidence_avg_5m
+        expr: avg_over_time(translation_confidence_score[5m]))
+
+      # TTS service performance
+      - record: hive:tts:processing_time_p95_5m
+        expr: histogram_quantile(0.95, rate(tts_processing_duration_seconds_bucket[5m]))
+        
+      - record: hive:tts:processing_time_p99_5m
+        expr: histogram_quantile(0.99, rate(tts_processing_duration_seconds_bucket[5m]))
+        
+      - record: hive:tts:request_rate_5m
+        expr: rate(tts_processing_duration_seconds_count[5m])
+
+  - name: system_resource_metrics  
+    interval: 30s
+    rules:
+      # CPU utilization
+      - record: hive:system:cpu_usage_percent
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+        
+      # Memory utilization
+      - record: hive:system:memory_usage_percent
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100
+        
+      # Disk utilization
+      - record: hive:system:disk_usage_percent
+        expr: (1 - (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs"})) * 100
+
+      # Service-specific resource usage
+      - record: hive:service:cpu_usage_avg_5m
+        expr: avg_over_time(service_cpu_usage_percent[5m])
+        
+      - record: hive:service:memory_usage_avg_5m
+        expr: avg_over_time(service_memory_usage_bytes[5m])
+        
+      - record: hive:service:gpu_usage_avg_5m
+        expr: avg_over_time(service_gpu_usage_percent[5m])
+
+  - name: livekit_metrics
+    interval: 15s
+    rules:
+      # Active session metrics
+      - record: hive:livekit:active_participants_total
+        expr: sum(livekit_participants_active)
+        
+      - record: hive:livekit:active_rooms_total
+        expr: count(count by (room_id) (livekit_participants_active > 0))
+
+      # Audio streaming metrics
+      - record: hive:livekit:audio_packet_rate_sent_5m
+        expr: rate(livekit_audio_packets_sent_total[5m])
+        
+      - record: hive:livekit:audio_packet_rate_received_5m
+        expr: rate(livekit_audio_packets_received_total[5m])
+        
+      - record: hive:livekit:audio_packet_loss_rate_5m
+        expr: rate(livekit_audio_packets_lost_total[5m]) / rate(livekit_audio_packets_sent_total[5m]) * 100
+
+      # Quality metrics
+      - record: hive:audio:quality_score_avg_5m
+        expr: avg_over_time(audio_quality_score[5m])
+
+  - name: business_metrics
+    interval: 1m
+    rules:
+      # Translation volume by language pair
+      - record: hive:business:translations_per_hour
+        expr: rate(http_requests_total{endpoint="/translate"}[1h]) * 3600
+        
+      # Popular language pairs
+      - record: hive:business:top_language_pairs_1h
+        expr: topk(10, sum by (language_pair) (rate(http_requests_total{endpoint="/translate"}[1h])))
+        
+      # Session duration statistics
+      - record: hive:business:avg_session_duration_5m
+        expr: avg_over_time(livekit_participants_active[5m]) * 300  # Estimate based on 5-minute windows
+        
+      # Error impact on business
+      - record: hive:business:failed_translations_rate_1h
+        expr: rate(http_requests_total{endpoint="/translate",status_code=~"5.."}[1h]) / rate(http_requests_total{endpoint="/translate"}[1h]) * 100
+
+  - name: alerting_aggregations
+    interval: 30s
+    rules:
+      # SLO breach detection
+      - record: hive:alert:slo_breach_count_24h
+        expr: increase(ALERTS{alertname=~".*SLO.*"}[24h])
+        
+      # Service downtime
+      - record: hive:alert:service_downtime_minutes_24h
+        expr: (1 - avg_over_time(up[24h])) * 1440  # Minutes in 24h
+        
+      # Critical alert counts
+      - record: hive:alert:critical_alerts_active
+        expr: count(ALERTS{severity="critical"})
+        
+      - record: hive:alert:warning_alerts_active
+        expr: count(ALERTS{severity="warning"})
+
+  - name: capacity_planning
+    interval: 5m
+    rules:
+      # Resource trend analysis
+      - record: hive:capacity:cpu_trend_1h
+        expr: predict_linear(hive:service:cpu_usage_avg_5m[1h], 3600)
+        
+      - record: hive:capacity:memory_trend_1h
+        expr: predict_linear(hive:service:memory_usage_avg_5m[1h], 3600)
+        
+      # Load trend analysis
+      - record: hive:capacity:request_rate_trend_1h
+        expr: predict_linear(hive:service:request_rate_5m[1h], 3600)
+        
+      # Translation demand prediction
+      - record: hive:capacity:translation_demand_trend_6h
+        expr: predict_linear(hive:business:translations_per_hour[6h], 21600)  # 6 hours ahead

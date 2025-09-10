@@ -1,0 +1,386 @@
+# Alert Rules for The HIVE Translation System SLO Monitoring
+# Critical performance thresholds and service health monitoring
+
+groups:
+  - name: slo_violations
+    rules:
+      # CRITICAL: Time-to-First-Token (TTFT) SLO Breach
+      - alert: TTFTSLOBreach
+        expr: histogram_quantile(0.95, rate(translation_ttft_duration_seconds_bucket[5m])) > 0.45
+        for: 2m
+        labels:
+          severity: critical
+          team: translation-pipeline
+          slo: ttft
+        annotations:
+          summary: "CRITICAL: Time-to-First-Token SLO breach"
+          description: |
+            The p95 Time-to-First-Token latency is {{ $value | humanizeDuration }}, exceeding the 450ms SLO target.
+            
+            **Impact**: User experience degraded, real-time translation feeling sluggish
+            **Threshold**: p95 TTFT > 450ms for 2 minutes
+            **Current Value**: {{ $value | humanizeDuration }}
+            **Target**: ≤ 450ms
+            
+            **Investigation Steps**:
+            1. Check STT service performance and queue depth
+            2. Verify MT service response times
+            3. Review TTS service latency and GPU utilization
+            4. Check LiveKit SFU performance
+          runbook_url: "https://wiki.thehive.com/runbooks/ttft-slo-breach"
+          dashboard_url: "http://localhost:3001/d/slo-monitoring"
+
+      # WARNING: Caption Latency SLO Breach  
+      - alert: CaptionLatencySLOBreach
+        expr: histogram_quantile(0.95, rate(caption_latency_seconds_bucket[5m])) > 0.25
+        for: 5m
+        labels:
+          severity: warning
+          team: translation-pipeline
+          slo: caption-latency
+        annotations:
+          summary: "Caption latency SLO breach"
+          description: |
+            The p95 caption display latency is {{ $value | humanizeDuration }}, exceeding the 250ms SLO target.
+            
+            **Impact**: Captions appear with noticeable delay
+            **Threshold**: p95 caption latency > 250ms for 5 minutes
+            **Current Value**: {{ $value | humanizeDuration }}
+            **Target**: ≤ 250ms
+            
+            **Investigation Steps**:
+            1. Check STT processing time (should be <150ms p95)
+            2. Verify MT translation speed (should be <50ms p95)
+            3. Review network latency between services
+          runbook_url: "https://wiki.thehive.com/runbooks/caption-latency-slo-breach"
+
+      # WARNING: High Word Retraction Rate
+      - alert: HighWordRetractionRate
+        expr: (rate(word_retractions_total[10m]) / rate(words_total[10m])) * 100 > 5
+        for: 10m
+        labels:
+          severity: warning
+          team: translation-pipeline
+          slo: retraction-rate
+        annotations:
+          summary: "High word retraction rate detected"
+          description: |
+            The word retraction rate is {{ $value | humanizePercentage }}, exceeding the 5% SLO target.
+            
+            **Impact**: Translation quality appears unstable, words frequently corrected
+            **Threshold**: Retraction rate > 5% for 10 minutes
+            **Current Value**: {{ $value | humanizePercentage }}
+            **Target**: < 5%
+            
+            **Investigation Steps**:
+            1. Review STT model confidence scores
+            2. Check LocalAgreement-2 algorithm stability parameters
+            3. Verify audio quality metrics
+            4. Review context window management in MT service
+          runbook_url: "https://wiki.thehive.com/runbooks/high-retraction-rate"
+
+      # CRITICAL: End-to-End Latency Breach
+      - alert: EndToEndLatencyBreach
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{endpoint="/translate/complete"}[5m])) > 0.5
+        for: 3m
+        labels:
+          severity: critical
+          team: translation-pipeline
+          slo: e2e-latency
+        annotations:
+          summary: "CRITICAL: End-to-end translation latency SLO breach"
+          description: |
+            The p95 end-to-end translation latency is {{ $value | humanizeDuration }}, exceeding the 500ms target.
+            
+            **Impact**: Real-time translation significantly degraded
+            **Threshold**: p95 E2E latency > 500ms for 3 minutes
+            **Current Value**: {{ $value | humanizeDuration }}
+            **Target**: < 500ms
+            
+            **Immediate Actions**:
+            1. Check all service health status
+            2. Verify resource utilization (CPU/GPU/Memory)
+            3. Review network connectivity between services
+            4. Consider activating emergency scaling
+          runbook_url: "https://wiki.thehive.com/runbooks/e2e-latency-breach"
+
+  - name: service_health
+    rules:
+      # CRITICAL: Service Down
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "CRITICAL: {{ $labels.job }} service is down"
+          description: |
+            The {{ $labels.job }} service has been unreachable for more than 1 minute.
+            
+            **Impact**: Translation pipeline degraded or completely unavailable
+            **Service**: {{ $labels.job }}
+            **Instance**: {{ $labels.instance }}
+            
+            **Immediate Actions**:
+            1. Check service logs: `docker logs {{ $labels.job }}`
+            2. Verify container status: `docker ps | grep {{ $labels.job }}`
+            3. Restart service if needed: `docker restart {{ $labels.job }}`
+            4. Check resource constraints (memory/disk)
+          runbook_url: "https://wiki.thehive.com/runbooks/service-down"
+
+      # CRITICAL: High Error Rate
+      - alert: HighServiceErrorRate
+        expr: (rate(http_requests_total{status_code=~"5.."}[5m]) / rate(http_requests_total[5m])) * 100 > 1
+        for: 5m
+        labels:
+          severity: critical
+          team: "{{ $labels.job }}-team"
+        annotations:
+          summary: "High error rate for {{ $labels.job }} service"
+          description: |
+            The {{ $labels.job }} service has an error rate of {{ $value | humanizePercentage }}.
+            
+            **Threshold**: Error rate > 1% for 5 minutes
+            **Current Value**: {{ $value | humanizePercentage }}
+            **Service**: {{ $labels.job }}
+            **Endpoint**: {{ $labels.endpoint }}
+            
+            **Investigation Steps**:
+            1. Check recent deployments or configuration changes
+            2. Review service logs for error patterns
+            3. Verify upstream dependencies
+            4. Check resource utilization
+          runbook_url: "https://wiki.thehive.com/runbooks/high-error-rate"
+
+      # WARNING: High Response Time
+      - alert: HighServiceResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1.0
+        for: 5m
+        labels:
+          severity: warning
+          team: "{{ $labels.job }}-team"
+        annotations:
+          summary: "High response time for {{ $labels.job }} service"
+          description: |
+            The p95 response time for {{ $labels.job }} is {{ $value | humanizeDuration }}.
+            
+            **Threshold**: p95 response time > 1s for 5 minutes
+            **Current Value**: {{ $value | humanizeDuration }}
+            **Service**: {{ $labels.job }}
+            **Endpoint**: {{ $labels.endpoint }}
+            
+            **Investigation Steps**:
+            1. Check CPU and memory utilization
+            2. Review database query performance (if applicable)
+            3. Verify network latency to dependencies
+            4. Consider scaling resources
+
+  - name: resource_usage
+    rules:
+      # WARNING: High CPU Usage
+      - alert: HighCPUUsage
+        expr: (100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)) > 80
+        for: 10m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: |
+            CPU usage is {{ $value | humanizePercentage }} on {{ $labels.instance }}.
+            
+            **Threshold**: CPU usage > 80% for 10 minutes
+            **Current Value**: {{ $value | humanizePercentage }}
+            **Instance**: {{ $labels.instance }}
+            
+            **Actions**:
+            1. Identify CPU-intensive processes
+            2. Check for runaway processes or memory leaks
+            3. Consider scaling resources or load balancing
+            4. Review recent performance changes
+
+      # WARNING: High Memory Usage
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: |
+            Memory usage is {{ $value | humanizePercentage }} on {{ $labels.instance }}.
+            
+            **Threshold**: Memory usage > 85% for 5 minutes
+            **Current Value**: {{ $value | humanizePercentage }}
+            **Instance**: {{ $labels.instance }}
+            **Available**: {{ with query "node_memory_MemAvailable_bytes" }}{{ . | first | value | humanizeBytes }}{{ end }}
+            **Total**: {{ with query "node_memory_MemTotal_bytes" }}{{ . | first | value | humanizeBytes }}{{ end }}
+
+      # CRITICAL: High GPU Usage (for STT/TTS services)
+      - alert: HighGPUUsage
+        expr: nvidia_gpu_utilization > 95
+        for: 15m
+        labels:
+          severity: critical
+          team: ml-services
+        annotations:
+          summary: "High GPU usage on {{ $labels.instance }}"
+          description: |
+            GPU usage is {{ $value }}% on {{ $labels.instance }} GPU {{ $labels.gpu }}.
+            
+            **Threshold**: GPU usage > 95% for 15 minutes
+            **Current Value**: {{ $value }}%
+            **Impact**: STT/TTS performance may be severely degraded
+            
+            **Actions**:
+            1. Check GPU memory usage and processes
+            2. Review STT/TTS service load balancing
+            3. Consider adding GPU resources
+            4. Monitor model inference queues
+
+      # WARNING: Low Disk Space
+      - alert: LowDiskSpace
+        expr: (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs"}) * 100 < 15
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: |
+            Disk space is {{ $value | humanizePercentage }} available on {{ $labels.mountpoint }}.
+            
+            **Threshold**: < 15% disk space available
+            **Current Available**: {{ $value | humanizePercentage }}
+            **Mount Point**: {{ $labels.mountpoint }}
+            **Instance**: {{ $labels.instance }}
+
+  - name: translation_quality
+    rules:
+      # WARNING: Low Translation Confidence
+      - alert: LowTranslationConfidence
+        expr: avg(translation_confidence_score) < 0.7
+        for: 15m
+        labels:
+          severity: warning
+          team: ml-services
+        annotations:
+          summary: "Low translation confidence detected"
+          description: |
+            Average translation confidence score is {{ $value | humanizePercentage }}.
+            
+            **Threshold**: Average confidence < 70% for 15 minutes
+            **Current Value**: {{ $value | humanizePercentage }}
+            **Target**: > 80%
+            
+            **Investigation Steps**:
+            1. Review input audio quality
+            2. Check STT transcription accuracy
+            3. Verify MT model performance by language pair
+            4. Review context window effectiveness
+
+      # WARNING: Poor Audio Quality
+      - alert: PoorAudioQuality
+        expr: avg(audio_quality_score) < 0.6
+        for: 10m
+        labels:
+          severity: warning
+          team: audio-processing
+        annotations:
+          summary: "Poor audio quality detected"
+          description: |
+            Average audio quality score is {{ $value | humanizePercentage }}.
+            
+            **Threshold**: Average audio quality < 60% for 10 minutes  
+            **Current Value**: {{ $value | humanizePercentage }}
+            **Target**: > 80%
+            
+            **Impact**: May affect STT accuracy and translation quality
+            
+            **Actions**:
+            1. Check microphone settings and noise suppression
+            2. Review WebRTC audio processing
+            3. Verify codec settings and bitrate
+            4. Check network packet loss
+
+  - name: livekit_sfu
+    rules:
+      # WARNING: High Participant Load
+      - alert: HighParticipantLoad
+        expr: sum(livekit_participants_active) > 20
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "High participant load on LiveKit SFU"
+          description: |
+            Total active participants: {{ $value }}
+            
+            **Threshold**: > 20 concurrent participants
+            **Current Load**: {{ $value }} participants
+            **Capacity**: Designed for up to 50 participants
+            
+            **Actions**:
+            1. Monitor SFU CPU and memory usage
+            2. Check network bandwidth utilization
+            3. Consider enabling additional SFU instances
+            4. Review load balancing configuration
+
+      # CRITICAL: Packet Loss
+      - alert: HighPacketLoss
+        expr: rate(livekit_audio_packets_lost_total[5m]) / rate(livekit_audio_packets_sent_total[5m]) * 100 > 2
+        for: 3m
+        labels:
+          severity: critical
+          team: network
+        annotations:
+          summary: "High audio packet loss detected"
+          description: |
+            Packet loss rate: {{ $value | humanizePercentage }}
+            
+            **Threshold**: Packet loss > 2% for 3 minutes
+            **Current Value**: {{ $value | humanizePercentage }}
+            **Impact**: Audio quality and translation accuracy degraded
+            
+            **Actions**:
+            1. Check network connectivity and bandwidth
+            2. Review CoTURN server performance
+            3. Verify UDP port availability
+            4. Consider adjusting audio codec settings
+
+  - name: business_metrics
+    rules:
+      # INFO: Low Session Activity
+      - alert: LowSessionActivity
+        expr: sum(livekit_participants_active) == 0
+        for: 30m
+        labels:
+          severity: info
+          team: product
+        annotations:
+          summary: "No active translation sessions"
+          description: |
+            No active translation sessions for 30 minutes.
+            
+            **Note**: This may be normal during off-peak hours
+            **Actions**: Monitor for system issues if unexpected
+
+      # INFO: Popular Language Pairs
+      - alert: PopularLanguagePair
+        expr: rate(http_requests_total{endpoint="/translate"}[1h]) by (language_pair) > 100
+        for: 1h
+        labels:
+          severity: info
+          team: product
+        annotations:
+          summary: "High usage for {{ $labels.language_pair }} language pair"
+          description: |
+            Translation requests: {{ $value | humanize }} per hour
+            
+            **Language Pair**: {{ $labels.language_pair }}
+            **Rate**: {{ $value | humanize }} requests/hour
+            
+            **Insights**: Consider optimizing popular language pairs

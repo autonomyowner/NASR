@@ -100,4 +100,232 @@
   .premium-border {
     @apply border-cyan-500/30;
   }
+
+  /* Translation UI Components */
+  .translation-panel {
+    @apply backdrop-blur-xl bg-slate-900/80 border border-hive-cyan/30 rounded-2xl shadow-2xl;
+  }
+
+  .translation-controls {
+    @apply backdrop-blur-xl bg-slate-900/80 border border-hive-cyan/30 rounded-2xl shadow-2xl;
+  }
+
+  .translation-controls-compact {
+    @apply backdrop-blur-xl bg-slate-900/80 border border-hive-cyan/30 rounded-xl shadow-lg;
+  }
+
+  /* Caption styling */
+  .caption-line {
+    @apply backdrop-blur-sm rounded-xl transition-all duration-300;
+  }
+
+  .caption-line:hover {
+    @apply scale-[1.02] shadow-lg;
+  }
+
+  .stable-text .word.stable {
+    @apply text-white opacity-100 transition-opacity duration-300;
+  }
+
+  .stable-text .word.unstable {
+    @apply text-white/70 underline decoration-dotted decoration-yellow-400/50 transition-opacity duration-300;
+  }
+
+  /* Premium button effects */
+  .btn-translation {
+    @apply relative overflow-hidden transition-all duration-200 ease-out transform;
+  }
+
+  .btn-translation:active {
+    @apply scale-95;
+  }
+
+  .btn-translation.pressed {
+    @apply scale-110 shadow-2xl;
+  }
+
+  /* Custom slider styling */
+  .slider-thumb {
+    @apply bg-white/20 rounded-lg appearance-none cursor-pointer;
+  }
+
+  .slider-thumb::-webkit-slider-thumb {
+    @apply appearance-none w-5 h-5 bg-hive-cyan rounded-full cursor-pointer shadow-lg;
+    background-image: radial-gradient(circle, rgba(6, 182, 212, 0.8), rgba(6, 182, 212, 1));
+  }
+
+  .slider-thumb::-moz-range-thumb {
+    @apply w-5 h-5 bg-hive-cyan rounded-full cursor-pointer border-none shadow-lg;
+    background-image: radial-gradient(circle, rgba(6, 182, 212, 0.8), rgba(6, 182, 212, 1));
+  }
+
+  /* Scrollbar styling */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-track-transparent {
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  }
+
+  .scrollbar-thumb-white\/20::-webkit-scrollbar {
+    @apply w-2;
+  }
+
+  .scrollbar-thumb-white\/20::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  .scrollbar-thumb-white\/20::-webkit-scrollbar-thumb {
+    @apply bg-white/20 rounded-full;
+  }
+
+  .scrollbar-thumb-white\/20::-webkit-scrollbar-thumb:hover {
+    @apply bg-white/30;
+  }
+
+  /* Language selector grid */
+  .language-grid-item {
+    @apply p-3 rounded-xl border-2 transition-all duration-200 cursor-pointer;
+  }
+
+  .language-grid-item:hover {
+    @apply transform scale-105 shadow-lg;
+  }
+
+  .language-grid-item.selected {
+    @apply bg-hive-cyan/20 border-hive-cyan text-hive-cyan shadow-lg;
+  }
+
+  .language-grid-item:not(.selected) {
+    @apply bg-white/5 border-white/20 text-gray-300 hover:border-white/40 hover:bg-white/10;
+  }
+
+  /* Voice preview button */
+  .voice-preview-btn {
+    @apply p-2 bg-hive-cyan/20 text-hive-cyan rounded-lg hover:bg-hive-cyan/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Mode selector buttons */
+  .mode-selector-btn {
+    @apply p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer;
+  }
+
+  .mode-selector-btn:hover {
+    @apply transform scale-105 shadow-lg;
+  }
+
+  .mode-selector-btn.active {
+    @apply bg-hive-cyan/20 text-hive-cyan border-hive-cyan shadow-lg;
+  }
+
+  .mode-selector-btn:not(.active) {
+    @apply bg-white/5 text-gray-400 border-white/20 hover:border-white/40 hover:bg-white/10;
+  }
+
+  /* Status indicators */
+  .status-indicator {
+    @apply flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-medium;
+  }
+
+  .status-indicator.active {
+    @apply bg-emerald-500/20 text-emerald-300;
+  }
+
+  .status-indicator.inactive {
+    @apply bg-gray-500/20 text-gray-400;
+  }
+
+  .status-indicator.warning {
+    @apply bg-yellow-500/20 text-yellow-300;
+  }
+
+  .status-indicator.error {
+    @apply bg-red-500/20 text-red-300;
+  }
+
+  /* Live indicators */
+  .live-indicator {
+    @apply flex items-center space-x-1;
+  }
+
+  .live-indicator-dot {
+    @apply w-2 h-2 rounded-full animate-pulse;
+  }
+
+  .live-indicator-dot.active {
+    @apply bg-red-400;
+  }
+
+  .live-indicator-dot.processing {
+    @apply bg-yellow-400;
+  }
+
+  .live-indicator-dot.ready {
+    @apply bg-green-400;
+  }
+
+  /* Confidence indicators */
+  .confidence-high {
+    @apply text-green-400;
+  }
+
+  .confidence-medium {
+    @apply text-yellow-400;
+  }
+
+  .confidence-low {
+    @apply text-red-400;
+  }
+
+  /* Animation keyframes for translation UI */
+  @keyframes pulse-translation {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.7;
+      transform: scale(1.05);
+    }
+  }
+
+  @keyframes ripple-effect {
+    0% {
+      transform: scale(0);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(2);
+      opacity: 0;
+    }
+  }
+
+  @keyframes processing-dots {
+    0%, 20% {
+      opacity: 0;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  .animate-pulse-translation {
+    animation: pulse-translation 2s ease-in-out infinite;
+  }
+
+  .animate-ripple {
+    animation: ripple-effect 0.6s ease-out forwards;
+  }
+
+  .animate-processing-dots {
+    animation: processing-dots 1.5s ease-in-out infinite;
+  }
+
+  .animate-processing-dots:nth-child(1) { animation-delay: 0ms; }
+  .animate-processing-dots:nth-child(2) { animation-delay: 200ms; }
+  .animate-processing-dots:nth-child(3) { animation-delay: 400ms; }
 }

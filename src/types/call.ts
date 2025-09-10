@@ -3,10 +3,12 @@ export interface CallState {
   isConnecting: boolean
   isMuted: boolean
   isTranslationEnabled: boolean
+  isDelayEnabled: boolean
   localStream: MediaStream | null
   remoteStream: MediaStream | null
   callId: string | null
   peerId: string | null
+  peerConnection?: RTCPeerConnection | null
   qualityMetrics?: CallQualityMetrics
   qualityScore?: number
   qualityText?: string
@@ -30,6 +32,7 @@ export interface CallControls {
   endCall: () => void
   toggleMute: () => void
   toggleTranslation: () => void
+  toggleDelay: () => void
   answerCall: (fromPeerId: string, offer: RTCSessionDescriptionInit) => Promise<void>
   declineCall: () => void
   handleCallAnswer: (fromPeerId: string, answer: RTCSessionDescriptionInit) => Promise<void>

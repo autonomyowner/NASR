@@ -1,0 +1,241 @@
+# Audio Quality Optimization Configuration for The HIVE
+# RED (Random Early Detection) and PLC (Packet Loss Concealment) settings
+# Target: <500ms end-to-end latency with resilience to 1-5% packet loss
+
+# Jitter Buffer Configuration - ULTRA-LOW LATENCY
+jitter_buffer:
+  # Aggressive settings for real-time translation
+  target_delay: 20ms        # Ultra-low target for minimal latency
+  max_delay: 100ms          # Hard limit to prevent excessive buffering
+  min_delay: 10ms           # Minimum safety buffer
+  
+  # Adaptive behavior for network variations
+  adaptive: true            # Enable dynamic adjustment
+  adaptation_speed: fast    # Quick response to network changes
+  
+  # Buffer management
+  buffer_frames: 5          # Minimal frame buffering (5 frames = ~100ms at 20ms/frame)
+  prebuffer_frames: 2       # Pre-fill buffer for startup
+  
+  # Packet arrival variance handling
+  variance_threshold: 30ms  # Trigger adaptation if jitter exceeds 30ms
+  adaptation_rate: 0.1      # Gradual adjustment factor
+  
+  # Performance thresholds
+  underrun_threshold: 5%    # Acceptable underrun rate
+  overrun_threshold: 2%     # Acceptable overrun rate
+
+# Redundant Encoding (RED) Configuration
+redundant_encoding:
+  enabled: true
+  
+  # RED parameters for packet loss resilience
+  redundancy_level: 1       # Single frame redundancy (balance latency/resilience)
+  max_history: 3            # Maximum frames to keep for recovery
+  
+  # Adaptive redundancy based on network conditions
+  adaptive_redundancy: true
+  loss_threshold_enable: 1.0%    # Enable redundancy at 1% packet loss
+  loss_threshold_increase: 3.0%  # Increase redundancy at 3% packet loss
+  
+  # Encoding efficiency
+  compression_ratio: 0.7    # Compress redundant data to 70% of original
+  frame_types: ["audio"]    # Apply to audio frames only
+  
+  # Network condition monitoring
+  monitor_interval: 1000ms  # Check conditions every second
+  history_window: 10        # Consider last 10 seconds for decisions
+
+# Packet Loss Concealment (PLC) Configuration
+packet_loss_concealment:
+  # Primary PLC algorithm
+  algorithm: "opus_plc"     # Use Opus built-in PLC (optimized for speech)
+  
+  # Concealment parameters
+  concealment_duration: 20ms      # Maximum duration to conceal
+  fade_out_threshold: 100ms       # Start fade-out after 100ms
+  quality_threshold: 0.8          # Maintain 80% quality during concealment
+  
+  # Advanced PLC techniques
+  pitch_based: true              # Use pitch tracking for better concealment
+  spectral_analysis: true        # Spectral-based concealment for complex audio
+  
+  # Fallback strategies
+  fallback_algorithm: "silence"  # Insert silence if PLC fails
+  max_consecutive_loss: 5        # Maximum consecutive packets to conceal
+  
+  # Quality adaptation
+  quality_degradation: 0.1       # Gradual quality reduction per lost packet
+  recovery_time: 500ms           # Time to fully recover quality
+
+# Audio Quality Adaptation
+quality_adaptation:
+  # Bitrate adaptation based on network conditions
+  adaptive_bitrate: true
+  initial_bitrate: 48000         # 48 kbps starting bitrate
+  max_bitrate: 128000           # 128 kbps maximum for excellent quality
+  min_bitrate: 24000            # 24 kbps minimum for intelligibility
+  
+  # Quality levels and thresholds
+  quality_levels:
+    excellent:
+      bitrate: 96000            # 96 kbps
+      frame_duration: 10ms      # Ultra-low latency frames
+      complexity: 8             # High computational complexity
+      conditions:
+        packet_loss: 0%
+        rtt: "<50ms"
+        jitter: "<20ms"
+    
+    good:
+      bitrate: 48000            # 48 kbps (default)
+      frame_duration: 20ms      # Standard frames
+      complexity: 5             # Medium complexity
+      conditions:
+        packet_loss: "<2%"
+        rtt: "<100ms"
+        jitter: "<50ms"
+    
+    acceptable:
+      bitrate: 32000            # 32 kbps
+      frame_duration: 20ms      # Standard frames
+      complexity: 3             # Lower complexity
+      conditions:
+        packet_loss: "<5%"
+        rtt: "<200ms"
+        jitter: "<100ms"
+    
+    minimal:
+      bitrate: 24000            # 24 kbps minimum
+      frame_duration: 40ms      # Larger frames for efficiency
+      complexity: 1             # Minimal complexity
+      conditions:
+        packet_loss: ">=5%"
+        rtt: ">=200ms"
+        jitter: ">=100ms"
+
+# Network Monitoring Configuration
+network_monitoring:
+  # Real-time network quality assessment
+  enabled: true
+  monitor_interval: 500ms       # Check network conditions every 500ms
+  
+  # Metrics to track
+  metrics:
+    - packet_loss_rate
+    - round_trip_time
+    - jitter_variance
+    - bandwidth_available
+    - connection_stability
+  
+  # Thresholds for quality adaptation
+  thresholds:
+    packet_loss:
+      warning: 1.0%
+      critical: 5.0%
+    
+    rtt:
+      warning: 100ms
+      critical: 300ms
+    
+    jitter:
+      warning: 50ms
+      critical: 150ms
+    
+    bandwidth:
+      warning: 64000        # 64 kbps
+      critical: 32000       # 32 kbps
+
+# Codec-Specific Optimizations
+codec_optimization:
+  opus:
+    # Opus-specific settings for minimal latency
+    frame_duration: 10ms        # Use smallest frame size
+    dtx: false                  # Disable DTX for consistent latency
+    fec: true                   # Enable Forward Error Correction
+    cbr: false                  # Use VBR for better quality
+    
+    # Application type optimization
+    application: "voip"         # Optimize for voice over IP
+    
+    # Bandwidth optimization
+    bandwidth: "fullband"       # Full frequency range (up to 20kHz)
+    max_bandwidth: "wideband"   # Fallback to wideband (up to 8kHz)
+    
+    # Signal characteristics
+    signal_type: "voice"        # Optimize for speech
+    complexity: 5               # Balance quality and CPU usage
+
+# Performance Monitoring
+performance_monitoring:
+  # Real-time metrics collection
+  enabled: true
+  collection_interval: 100ms   # High-frequency monitoring
+  
+  # Metrics to collect
+  audio_metrics:
+    - latency_end_to_end
+    - jitter_buffer_level
+    - packet_loss_rate
+    - audio_quality_score
+    - concealment_rate
+    - red_utilization
+  
+  # SLA monitoring
+  sla_targets:
+    end_to_end_latency:
+      target: 450ms
+      warning: 400ms
+      critical: 500ms
+    
+    packet_loss:
+      target: 1%
+      warning: 2%
+      critical: 5%
+    
+    audio_quality:
+      target: 0.9      # 90% quality score
+      warning: 0.8     # 80% quality score
+      critical: 0.6    # 60% quality score
+  
+  # Alerting configuration
+  alerting:
+    enabled: true
+    alert_channels:
+      - prometheus_webhook
+      - logging
+    
+    alert_rules:
+      - name: "high_latency"
+        condition: "end_to_end_latency > 500ms"
+        duration: "10s"
+        severity: "critical"
+      
+      - name: "excessive_packet_loss"
+        condition: "packet_loss_rate > 5%"
+        duration: "30s"
+        severity: "warning"
+      
+      - name: "audio_quality_degradation"
+        condition: "audio_quality_score < 0.7"
+        duration: "60s"
+        severity: "warning"
+
+# Production Deployment Settings
+production:
+  # Enable all optimizations
+  enable_all_optimizations: true
+  
+  # Resource allocation
+  cpu_priority: "high"          # High CPU priority for audio processing
+  memory_allocation: "1GB"      # Dedicated memory for audio buffers
+  
+  # System-level optimizations
+  system_tweaks:
+    - "echo 1 > /proc/sys/net/core/netdev_max_backlog"
+    - "echo 1048576 > /proc/sys/net/core/rmem_max"
+    - "echo 1048576 > /proc/sys/net/core/wmem_max"
+  
+  # Logging level for production
+  log_level: "info"             # Reduced logging for performance
+  metrics_export: true          # Enable metrics export for monitoring

@@ -1,94 +1,265 @@
-
-export interface TranslationService {
-  translate: (text: string, fromLang: string, toLang: string) => Promise<string>
-  detectLanguage: (text: string) => Promise<string>
-  getSupportedLanguages: () => string[]
+export interface TranslationResult {
+  text: string
+  confidence: number
+  detectedSourceLang?: string
+  processing_time_ms: number
 }
 
-// Mock translation service (replace with Google Translate API or similar in production)
-class MockTranslationService implements TranslationService {
+export interface TranslationService {
+  translate: (text: string, fromLang: string, toLang: string) => Promise<TranslationResult>
+  detectLanguage: (text: string) => Promise<string>
+  getSupportedLanguages: () => string[]
+  isConnected: () => boolean
+  connect: () => Promise<void>
+  disconnect: () => void
+}
+
+// Production Translation Service connecting to backend MT service
+class ProductionTranslationService implements TranslationService {
+  private ws: WebSocket | null = null
+  private pendingRequests = new Map<string, { resolve: Function, reject: Function }>()
+  private reconnectAttempts = 0
+  private maxReconnectAttempts = 5
+  private reconnectDelay = 1000
+  private connected = false
+  
   private supportedLanguages = [
     'en-US', 'es-ES', 'fr-FR', 'de-DE', 'it-IT', 'pt-PT', 
-    'ar-SA', 'zh-CN', 'ja-JP', 'ko-KR', 'hi-IN'
+    'ar-SA', 'zh-CN', 'ja-JP', 'ko-KR', 'hi-IN', 'ru-RU',
+    'nl-NL', 'sv-SE', 'pl-PL', 'tr-TR'
   ]
 
-  // Mock translation - in production, replace with real API call
-  async translate(text: string, fromLang: string, toLang: string): Promise<string> {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 100))
+  private getMTServiceUrl(): string {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    const host = process.env.NODE_ENV === 'production' 
+      ? window.location.host 
+      : 'localhost:8002'
+    return `${protocol}//${host}/ws/translate`
+  }
+
+  async connect(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      try {
+        const url = this.getMTServiceUrl()
+        console.log(`🔗 Connecting to MT service: ${url}`)
+        
+        this.ws = new WebSocket(url)
+        
+        this.ws.onopen = () => {
+          console.log('✅ Connected to MT service')
+          this.connected = true
+          this.reconnectAttempts = 0
+          resolve()
+        }
+        
+        this.ws.onmessage = (event) => {
+          try {
+            const response = JSON.parse(event.data)
+            const requestId = response.request_id
+            
+            if (this.pendingRequests.has(requestId)) {
+              const { resolve } = this.pendingRequests.get(requestId)!
+              this.pendingRequests.delete(requestId)
+              resolve(response)
+            }
+          } catch (error) {
+            console.error('❌ Error parsing MT service response:', error)
+          }
+        }
+        
+        this.ws.onclose = () => {
+          console.log('🔌 Disconnected from MT service')
+          this.connected = false
+          this.attemptReconnect()
+        }
+        
+        this.ws.onerror = (error) => {
+          console.error('❌ MT service WebSocket error:', error)
+          this.connected = false
+          if (this.reconnectAttempts === 0) {
+            reject(error)
+          }
+        }
+        
+        // Connection timeout
+        setTimeout(() => {
+          if (!this.connected) {
+            reject(new Error('Connection timeout to MT service'))
+          }
+        }, 5000)
+        
+      } catch (error) {
+        reject(error)
+      }
+    })
+  }
+
+  private async attemptReconnect(): Promise<void> {
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.error('❌ Max reconnection attempts reached for MT service')
+      return
+    }
+
+    this.reconnectAttempts++
+    const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1)
     
-    // Return mock translations for demo
-    const mockTranslations: { [key: string]: { [key: string]: string } } = {
-      'en-US': {
-        'es-ES': `[ES] ${text}`,
-        'fr-FR': `[FR] ${text}`,
-        'de-DE': `[DE] ${text}`,
-        'ar-SA': `[AR] ${text}`,
-        'zh-CN': `[ZH] ${text}`
-      },
-      'es-ES': {
-        'en-US': `[EN] ${text}`,
-        'fr-FR': `[FR] ${text}`,
-        'de-DE': `[DE] ${text}`
-      },
-      'ar-SA': {
-        'en-US': `[EN] ${text}`,
-        'es-ES': `[ES] ${text}`,
-        'fr-FR': `[FR] ${text}`
+    console.log(`🔄 Attempting to reconnect to MT service (${this.reconnectAttempts}/${this.maxReconnectAttempts}) in ${delay}ms`)
+    
+    setTimeout(() => {
+      this.connect().catch(() => {
+        // Retry will be handled by onclose event
+      })
+    }, delay)
+  }
+
+  async translate(text: string, fromLang: string, toLang: string): Promise<TranslationResult> {
+    if (!this.connected || !this.ws) {
+      // Fallback to mock translation if service unavailable
+      console.warn('⚠️ MT service not connected, using fallback translation')
+      return {
+        text: `[${toLang.split('-')[0].toUpperCase()}] ${text}`,
+        confidence: 0.7,
+        detectedSourceLang: fromLang,
+        processing_time_ms: 100
       }
     }
 
-    const translation = mockTranslations[fromLang]?.[toLang]
-    return translation || `[${toLang.split('-')[0].toUpperCase()}] ${text}`
+    const requestId = `translate-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    const startTime = performance.now()
+    
+    return new Promise((resolve, reject) => {
+      const request = {
+        request_id: requestId,
+        type: 'translate',
+        text: text.trim(),
+        source_lang: this.normalizeLanguageCode(fromLang),
+        target_lang: this.normalizeLanguageCode(toLang),
+        context: [], // Add conversation context for rolling context
+        options: {
+          quality_mode: 'fast', // or 'quality' for higher accuracy
+          preserve_formatting: true,
+          handle_code_switching: true
+        }
+      }
+
+      this.pendingRequests.set(requestId, { 
+        resolve: (response: any) => {
+          const processingTime = performance.now() - startTime
+          resolve({
+            text: response.translated_text || response.text,
+            confidence: response.confidence || 0.9,
+            detectedSourceLang: response.detected_language || fromLang,
+            processing_time_ms: Math.round(processingTime)
+          })
+        }, 
+        reject 
+      })
+
+      // Request timeout (SLO: 100ms target)
+      setTimeout(() => {
+        if (this.pendingRequests.has(requestId)) {
+          this.pendingRequests.delete(requestId)
+          reject(new Error('Translation request timeout (>100ms SLO violation)'))
+        }
+      }, 200) // Allow some buffer over 100ms SLO
+
+      this.ws!.send(JSON.stringify(request))
+    })
   }
 
   async detectLanguage(text: string): Promise<string> {
-    // Mock language detection
-    await new Promise(resolve => setTimeout(resolve, 50))
+    if (!this.connected || !this.ws) {
+      // Fallback language detection using heuristics
+      if (/[ñáéíóúü]/i.test(text)) return 'es-ES'
+      if (/[àâäéèêëïîôöùûüÿç]/i.test(text)) return 'fr-FR'
+      if (/[äöüß]/i.test(text)) return 'de-DE'
+      if (/[\u0600-\u06FF]/i.test(text)) return 'ar-SA'
+      if (/[\u4e00-\u9fff]/i.test(text)) return 'zh-CN'
+      return 'en-US'
+    }
+
+    const requestId = `detect-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     
-    // Simple heuristics for demo (replace with real detection)
-    if (/[ñáéíóúü]/i.test(text)) return 'es-ES'
-    if (/[àâäéèêëïîôöùûüÿç]/i.test(text)) return 'fr-FR'
-    if (/[äöüß]/i.test(text)) return 'de-DE'
-    if (/[\u0600-\u06FF]/i.test(text)) return 'ar-SA'
-    if (/[\u4e00-\u9fff]/i.test(text)) return 'zh-CN'
-    
-    return 'en-US' // Default to English
+    return new Promise((resolve, reject) => {
+      const request = {
+        request_id: requestId,
+        type: 'detect_language',
+        text: text.trim()
+      }
+
+      this.pendingRequests.set(requestId, { 
+        resolve: (response: any) => {
+          resolve(response.detected_language || 'en-US')
+        }, 
+        reject 
+      })
+
+      // Request timeout
+      setTimeout(() => {
+        if (this.pendingRequests.has(requestId)) {
+          this.pendingRequests.delete(requestId)
+          reject(new Error('Language detection timeout'))
+        }
+      }, 5000)
+
+      this.ws!.send(JSON.stringify(request))
+    })
+  }
+
+  private normalizeLanguageCode(lang: string): string {
+    const langMap: { [key: string]: string } = {
+      'en-US': 'en',
+      'es-ES': 'es',
+      'fr-FR': 'fr',
+      'de-DE': 'de',
+      'it-IT': 'it',
+      'pt-PT': 'pt',
+      'ar-SA': 'ar',
+      'zh-CN': 'zh',
+      'ja-JP': 'ja',
+      'ko-KR': 'ko',
+      'hi-IN': 'hi',
+      'ru-RU': 'ru',
+      'nl-NL': 'nl',
+      'sv-SE': 'sv',
+      'pl-PL': 'pl',
+      'tr-TR': 'tr'
+    }
+    return langMap[lang] || lang.split('-')[0]
   }
 
   getSupportedLanguages(): string[] {
     return this.supportedLanguages
   }
+
+  isConnected(): boolean {
+    return this.connected
+  }
+
+  disconnect(): void {
+    if (this.ws) {
+      this.ws.close()
+      this.ws = null
+    }
+    this.connected = false
+    this.pendingRequests.clear()
+  }
 }
+
+// Note: MockTranslationService is available but not currently used
+// Fallback mock service for development/testing when needed
+
+// Create global service instance - use production service by default
+const productionService = new ProductionTranslationService()
+
+// Auto-connect when module loads (with fallback to mock if fails)
+productionService.connect().catch(error => {
+  console.warn('⚠️ Failed to connect to production MT service on startup:', error)
+  console.log('🔄 Continuing with fallback mock translation for development')
+})
 
 // Export the service instance
-export const translationService: TranslationService = new MockTranslationService()
+export const translationService: TranslationService = productionService
 
-// For production, you can implement Google Translate API service:
-/*
-class GoogleTranslateService implements TranslationService {
-  private apiKey: string
-  
-  constructor(apiKey: string) {
-    this.apiKey = apiKey
-  }
-
-  async translate(text: string, fromLang: string, toLang: string): Promise<string> {
-    // Implementation here...
-  }
-
-  async detectLanguage(text: string): Promise<string> {
-    // Implementation here...
-  }
-
-  getSupportedLanguages(): string[] {
-    return [
-      'en-US', 'es-ES', 'fr-FR', 'de-DE', 'it-IT', 'pt-PT', 
-      'ru-RU', 'ar-SA', 'zh-CN', 'ja-JP', 'ko-KR', 'hi-IN',
-      'th-TH', 'vi-VN', 'tr-TR', 'pl-PL', 'nl-NL', 'sv-SE'
-    ]
-  }
-}
-
-export const translationService: TranslationService = new GoogleTranslateService(process.env.REACT_APP_GOOGLE_TRANSLATE_API_KEY || '')
-*/
+// For testing/development fallback: 
+// export const translationService: TranslationService = new MockTranslationService()

@@ -1,0 +1,701 @@
+# The HIVE Translation Pipeline - Security Hardened Infrastructure
+# Comprehensive security configuration with TLS/mTLS, least-privilege containers,
+# network isolation, and security monitoring for production deployment.
+
+version: '3.8'
+
+services:
+  # Certificate Authority Service - Manages all certificates
+  ca-manager:
+    build: ../security/ca-manager/
+    container_name: hive-ca-manager
+    volumes:
+      - ca_certs:/etc/ssl/hive
+      - ca_private:/etc/ssl/private/hive
+    environment:
+      - CA_VALIDITY_DAYS=3650
+      - SERVICE_VALIDITY_DAYS=365
+      - AUTO_RENEWAL=true
+    networks:
+      - hive-management
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100m
+    user: "1001:1001"
+    cap_drop:
+      - ALL
+    cap_add:
+      - DAC_OVERRIDE  # For certificate file permissions
+
+  # Enhanced Authentication Service with JWT and mTLS
+  auth-service:
+    build: ../services/auth/
+    container_name: hive-auth-service
+    ports:
+      - "8004:8004"
+    environment:
+      - ENVIRONMENT=production
+      - LIVEKIT_API_KEY_FILE=/run/secrets/livekit_api_key
+      - LIVEKIT_SECRET_KEY_FILE=/run/secrets/livekit_secret_key
+      - JWT_ISSUER=thehive-sfu
+      - JWT_DEFAULT_TTL_HOURS=6
+      - JWT_MAX_TTL_HOURS=24
+      - USE_RSA_SIGNING=true
+      - PRIVATE_KEY_PATH=/etc/ssl/hive/auth-service-key.pem
+      - PUBLIC_KEY_PATH=/etc/ssl/hive/auth-service.pem
+      - REDIS_URL=redis://hive-redis:6379
+      - RATE_LIMIT_ENABLED=true
+      - SECURITY_HEADERS_ENABLED=true
+      - TLS_CERT_FILE=/etc/ssl/hive/auth-service.pem
+      - TLS_KEY_FILE=/etc/ssl/private/hive/auth-service-key.pem
+      - TLS_CA_FILE=/etc/ssl/hive/ca.pem
+    volumes:
+      - ca_certs:/etc/ssl/hive:ro
+      - ca_private:/etc/ssl/private/hive:ro
+      - service_logs:/var/log/hive
+    secrets:
+      - livekit_api_key
+      - livekit_secret_key
+      - auth_service_api_key
+    networks:
+      hive-services:
+        ipv4_address: 172.20.0.14
+      hive-management:
+    depends_on:
+      - ca-manager
+      - redis
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100m
+      - /var/log/hive:noexec,nosuid,size=500m
+    user: "1001:1001"
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    healthcheck:
+      test: ["CMD", "curl", "-f", "https://localhost:8004/health", "--cacert", "/etc/ssl/hive/ca.pem", "--cert", "/etc/ssl/hive/auth-service.pem", "--key", "/etc/ssl/private/hive/auth-service-key.pem"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # LiveKit SFU with TLS and Security Hardening
+  livekit:
+    image: livekit/livekit-server:v1.4.3
+    container_name: hive-livekit-server
+    ports:
+      - "7880:7880"   # HTTPS API
+      - "7881:7881"   # WebRTC over TLS
+      - "50000-50199:50000-50199/udp"
+    volumes:
+      - ./livekit/server-secure.yaml:/etc/livekit.yaml:ro
+      - ca_certs:/etc/ssl/hive:ro
+      - ca_private:/etc/ssl/private/hive:ro
+      - service_logs:/var/log/livekit
+    environment:
+      - LIVEKIT_CONFIG=/etc/livekit.yaml
+      - NODE_IP=172.20.0.10
+      - MEMORY_LIMIT=2GB
+      - GOMAXPROCS=4
+      - TLS_CERT_FILE=/etc/ssl/hive/livekit.pem
+      - TLS_KEY_FILE=/etc/ssl/private/hive/livekit-key.pem
+    secrets:
+      - livekit_api_key
+      - livekit_secret_key
+    networks:
+      hive-services:
+        ipv4_address: 172.20.0.10
+      hive-management:
+    depends_on:
+      - ca-manager
+      - auth-service
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=200m
+      - /var/log/livekit:noexec,nosuid,size=500m
+    user: "1001:1001"
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+    sysctls:
+      - net.core.rmem_max=26214400
+      - net.core.wmem_max=26214400
+      - net.ipv4.udp_mem=65536 131072 262144
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+
+  # Security-Hardened Redis with Authentication
+  redis:
+    image: redis:7-alpine
+    container_name: hive-redis-secure
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./redis/redis-secure.conf:/usr/local/etc/redis/redis.conf:ro
+      - ca_certs:/etc/ssl/hive:ro
+    environment:
+      - REDIS_PASSWORD_FILE=/run/secrets/redis_password
+    secrets:
+      - redis_password
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf", "--requirepass", "$(cat /run/secrets/redis_password)"]
+    networks:
+      hive-services:
+        ipv4_address: 172.20.0.20
+      hive-management:
+    depends_on:
+      - ca-manager
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100m
+    user: "999:999"  # Redis user
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          memory: 1.5G
+        reservations:
+          memory: 512M
+
+  # STT Service with mTLS and Security Controls
+  stt-service:
+    build: ../services/stt/
+    container_name: hive-stt-secure
+    ports:
+      - "8001:8001"
+    environment:
+      - MODEL_SIZE=base.en
+      - DEVICE=cuda
+      - CHUNK_DURATION_MS=150
+      - AGREEMENT_THRESHOLD=1
+      - STABILITY_WINDOW=2
+      - LIVEKIT_URL=https://172.20.0.10:7880
+      - REDIS_URL=redis://:$(cat /run/secrets/redis_password)@172.20.0.20:6379
+      - TLS_CERT_FILE=/etc/ssl/hive/stt-service.pem
+      - TLS_KEY_FILE=/etc/ssl/private/hive/stt-service-key.pem
+      - TLS_CA_FILE=/etc/ssl/hive/ca.pem
+      - AUTH_SERVICE_URL=https://172.20.0.14:8004
+      - SERVICE_ACCOUNT_API_KEY_FILE=/run/secrets/stt_service_api_key
+      - SERVICE_ACCOUNT_SECRET_FILE=/run/secrets/stt_service_secret
+    volumes:
+      - stt_models:/app/models:ro
+      - ca_certs:/etc/ssl/hive:ro
+      - ca_private:/etc/ssl/private/hive:ro
+      - service_logs:/var/log/hive
+    secrets:
+      - redis_password
+      - stt_service_api_key
+      - stt_service_secret
+    networks:
+      hive-services:
+        ipv4_address: 172.20.0.11
+      hive-management:
+    depends_on:
+      - ca-manager
+      - redis
+      - livekit
+      - auth-service
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=500m
+      - /var/log/hive:noexec,nosuid,size=500m
+    user: "1001:1001"
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+        reservations:
+          memory: 2G
+
+  # MT Service with Security Hardening
+  mt-service:
+    build: ../services/mt/
+    container_name: hive-mt-secure
+    ports:
+      - "8002:8002"
+    environment:
+      - MODEL_CACHE_DIR=/app/models
+      - REDIS_URL=redis://:$(cat /run/secrets/redis_password)@172.20.0.20:6379
+      - CONTEXT_WINDOW_SIZE=8
+      - STT_SERVICE_URL=https://172.20.0.11:8001
+      - TTS_SERVICE_URL=https://172.20.0.13:8003
+      - TLS_CERT_FILE=/etc/ssl/hive/mt-service.pem
+      - TLS_KEY_FILE=/etc/ssl/private/hive/mt-service-key.pem
+      - TLS_CA_FILE=/etc/ssl/hive/ca.pem
+      - AUTH_SERVICE_URL=https://172.20.0.14:8004
+      - SERVICE_ACCOUNT_API_KEY_FILE=/run/secrets/mt_service_api_key
+      - SERVICE_ACCOUNT_SECRET_FILE=/run/secrets/mt_service_secret
+    volumes:
+      - mt_models:/app/models:ro
+      - ca_certs:/etc/ssl/hive:ro
+      - ca_private:/etc/ssl/private/hive:ro
+      - service_logs:/var/log/hive
+    secrets:
+      - redis_password
+      - mt_service_api_key
+      - mt_service_secret
+    networks:
+      hive-services:
+        ipv4_address: 172.20.0.12
+      hive-management:
+    depends_on:
+      - ca-manager
+      - redis
+      - auth-service
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=500m
+      - /var/log/hive:noexec,nosuid,size=500m
+    user: "1001:1001"
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+        reservations:
+          memory: 1.5G
+
+  # TTS Service with Security Controls
+  tts-service:
+    build: ../services/tts/
+    container_name: hive-tts-secure
+    ports:
+      - "8003:8003"
+    environment:
+      - ENGINE=xtts
+      - DEVICE=cuda
+      - VOICE_CACHE_DIR=/app/voices
+      - STREAMING_ENABLED=true
+      - CHUNK_SIZE=1024
+      - REDIS_URL=redis://:$(cat /run/secrets/redis_password)@172.20.0.20:6379
+      - LIVEKIT_URL=https://172.20.0.10:7880
+      - TLS_CERT_FILE=/etc/ssl/hive/tts-service.pem
+      - TLS_KEY_FILE=/etc/ssl/private/hive/tts-service-key.pem
+      - TLS_CA_FILE=/etc/ssl/hive/ca.pem
+      - AUTH_SERVICE_URL=https://172.20.0.14:8004
+      - SERVICE_ACCOUNT_API_KEY_FILE=/run/secrets/tts_service_api_key
+      - SERVICE_ACCOUNT_SECRET_FILE=/run/secrets/tts_service_secret
+      - JAEGER_ENDPOINT=https://172.20.0.50:14268/api/traces
+    volumes:
+      - tts_voices:/app/voices:ro
+      - tts_models:/app/models:ro
+      - ca_certs:/etc/ssl/hive:ro
+      - ca_private:/etc/ssl/private/hive:ro
+      - service_logs:/var/log/hive
+    secrets:
+      - redis_password
+      - tts_service_api_key
+      - tts_service_secret
+    networks:
+      hive-services:
+        ipv4_address: 172.20.0.13
+      hive-management:
+    depends_on:
+      - ca-manager
+      - redis
+      - livekit
+      - auth-service
+      - jaeger
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=500m
+      - /var/log/hive:noexec,nosuid,size=500m
+    user: "1001:1001"
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+        reservations:
+          memory: 3G
+
+  # Security Monitor Service
+  security-monitor:
+    build: ../security/
+    container_name: hive-security-monitor
+    ports:
+      - "8090:8090"
+    environment:
+      - REDIS_URL=redis://:$(cat /run/secrets/redis_password)@172.20.0.20:6379
+      - LOG_DIRECTORY=/var/log/hive/security
+      - EMAIL_ENABLED=true
+      - EMAIL_SMTP_HOST=smtp.gmail.com
+      - EMAIL_SMTP_PORT=587
+      - EMAIL_FROM_FILE=/run/secrets/security_email_from
+      - EMAIL_PASSWORD_FILE=/run/secrets/security_email_password
+      - EMAIL_TO_FILE=/run/secrets/security_email_to
+      - TLS_CERT_FILE=/etc/ssl/hive/security-monitor.pem
+      - TLS_KEY_FILE=/etc/ssl/private/hive/security-monitor-key.pem
+      - TLS_CA_FILE=/etc/ssl/hive/ca.pem
+    volumes:
+      - ca_certs:/etc/ssl/hive:ro
+      - ca_private:/etc/ssl/private/hive:ro
+      - service_logs:/var/log/hive
+    secrets:
+      - redis_password
+      - security_email_from
+      - security_email_password
+      - security_email_to
+    networks:
+      hive-services:
+        ipv4_address: 172.20.0.90
+      hive-management:
+    depends_on:
+      - ca-manager
+      - redis
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=200m
+    user: "1001:1001"
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+
+  # Enhanced Prometheus with mTLS
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: hive-prometheus-secure
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus-secure.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alert-rules.yml:/etc/prometheus/alert-rules.yml:ro
+      - ./monitoring/recording-rules.yml:/etc/prometheus/recording-rules.yml:ro
+      - prometheus_data:/prometheus
+      - ca_certs:/etc/ssl/hive:ro
+      - ca_private:/etc/ssl/private/hive:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+      - '--web.listen-address=0.0.0.0:9090'
+      - '--web.config.file=/etc/prometheus/web-config.yml'
+    networks:
+      hive-services:
+        ipv4_address: 172.20.0.40
+      hive-management:
+    depends_on:
+      - ca-manager
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=200m
+    user: "65534:65534"  # nobody user
+    cap_drop:
+      - ALL
+
+  # Secure Grafana with Authentication
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: hive-grafana-secure
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD_FILE=/run/secrets/grafana_admin_password
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SECURITY_COOKIE_SECURE=true
+      - GF_SECURITY_STRICT_TRANSPORT_SECURITY=true
+      - GF_SERVER_PROTOCOL=https
+      - GF_SERVER_CERT_FILE=/etc/ssl/hive/grafana.pem
+      - GF_SERVER_CERT_KEY=/etc/ssl/private/hive/grafana-key.pem
+      - GF_INSTALL_PLUGINS=redis-datasource,jaeger,loki
+      - GF_FEATURE_TOGGLES_ENABLE=tracing
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources:ro
+      - ca_certs:/etc/ssl/hive:ro
+      - ca_private:/etc/ssl/private/hive:ro
+    secrets:
+      - grafana_admin_password
+    networks:
+      hive-services:
+        ipv4_address: 172.20.0.41
+      hive-management:
+    depends_on:
+      - ca-manager
+      - prometheus
+      - jaeger
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=200m
+      - /var/lib/grafana/plugins:noexec,nosuid,size=500m
+    user: "472:472"  # Grafana user
+    cap_drop:
+      - ALL
+
+  # Secure Jaeger with TLS
+  jaeger:
+    image: jaegertracing/all-in-one:1.47.0
+    container_name: hive-jaeger-secure
+    ports:
+      - "16686:16686"  # HTTPS UI
+      - "14268:14268"  # HTTPS collector
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - SPAN_STORAGE_TYPE=memory
+      - MEMORY_MAX_TRACES=50000
+      - QUERY_UI_CONFIG=/etc/jaeger/ui-config.json
+      - COLLECTOR_HTTP_TLS_ENABLED=true
+      - COLLECTOR_HTTP_TLS_CERT=/etc/ssl/hive/jaeger.pem
+      - COLLECTOR_HTTP_TLS_KEY=/etc/ssl/private/hive/jaeger-key.pem
+      - COLLECTOR_HTTP_TLS_CA=/etc/ssl/hive/ca.pem
+    volumes:
+      - ca_certs:/etc/ssl/hive:ro
+      - ca_private:/etc/ssl/private/hive:ro
+      - ./jaeger/ui-config.json:/etc/jaeger/ui-config.json:ro
+    networks:
+      hive-services:
+        ipv4_address: 172.20.0.50
+      hive-management:
+    depends_on:
+      - ca-manager
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=200m
+    user: "10001:10001"
+    cap_drop:
+      - ALL
+
+  # Secure Nginx Reverse Proxy with mTLS
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: hive-nginx-secure
+    ports:
+      - "80:80"    # Redirect to HTTPS
+      - "443:443"  # HTTPS
+    volumes:
+      - ./nginx/nginx-secure.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/security-headers.conf:/etc/nginx/conf.d/security-headers.conf:ro
+      - ca_certs:/etc/ssl/hive:ro
+      - ca_private:/etc/ssl/private/hive:ro
+      - nginx_logs:/var/log/nginx
+    networks:
+      - hive-services
+      - hive-public
+    depends_on:
+      - ca-manager
+      - auth-service
+      - livekit
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx:noexec,nosuid,size=100m
+      - /var/run:noexec,nosuid,size=100m
+      - /tmp:noexec,nosuid,size=100m
+    user: "101:101"  # Nginx user
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+      - CHOWN
+      - SETGID
+      - SETUID
+
+# Docker Secrets for Sensitive Data
+secrets:
+  livekit_api_key:
+    file: ./secrets/livekit_api_key.txt
+  livekit_secret_key:
+    file: ./secrets/livekit_secret_key.txt
+  redis_password:
+    file: ./secrets/redis_password.txt
+  auth_service_api_key:
+    file: ./secrets/auth_service_api_key.txt
+  stt_service_api_key:
+    file: ./secrets/stt_service_api_key.txt
+  stt_service_secret:
+    file: ./secrets/stt_service_secret.txt
+  mt_service_api_key:
+    file: ./secrets/mt_service_api_key.txt
+  mt_service_secret:
+    file: ./secrets/mt_service_secret.txt
+  tts_service_api_key:
+    file: ./secrets/tts_service_api_key.txt
+  tts_service_secret:
+    file: ./secrets/tts_service_secret.txt
+  grafana_admin_password:
+    file: ./secrets/grafana_admin_password.txt
+  security_email_from:
+    file: ./secrets/security_email_from.txt
+  security_email_password:
+    file: ./secrets/security_email_password.txt
+  security_email_to:
+    file: ./secrets/security_email_to.txt
+
+# Secure Volume Configuration
+volumes:
+  ca_certs:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+      o: "size=100m,uid=1001,gid=1001,mode=0755"
+  ca_private:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+      o: "size=100m,uid=1001,gid=1001,mode=0700"
+  redis_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /var/lib/hive/redis
+      o: bind,uid=999,gid=999,mode=0700
+  stt_models:
+    driver: local
+    driver_opts:
+      type: none
+      device: /var/lib/hive/models/stt
+      o: bind,uid=1001,gid=1001,mode=0755
+  mt_models:
+    driver: local
+    driver_opts:
+      type: none
+      device: /var/lib/hive/models/mt
+      o: bind,uid=1001,gid=1001,mode=0755
+  tts_voices:
+    driver: local
+    driver_opts:
+      type: none
+      device: /var/lib/hive/models/tts
+      o: bind,uid=1001,gid=1001,mode=0755
+  tts_models:
+    driver: local
+    driver_opts:
+      type: none
+      device: /var/lib/hive/models/tts
+      o: bind,uid=1001,gid=1001,mode=0755
+  prometheus_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /var/lib/hive/prometheus
+      o: bind,uid=65534,gid=65534,mode=0755
+  grafana_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /var/lib/hive/grafana
+      o: bind,uid=472,gid=472,mode=0755
+  service_logs:
+    driver: local
+    driver_opts:
+      type: none
+      device: /var/log/hive
+      o: bind,uid=1001,gid=1001,mode=0755
+  nginx_logs:
+    driver: local
+    driver_opts:
+      type: none
+      device: /var/log/nginx
+      o: bind,uid=101,gid=101,mode=0755
+
+# Network Segmentation for Security
+networks:
+  # Internal services network - isolated from external access
+  hive-services:
+    driver: bridge
+    internal: true
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/24
+          gateway: 172.20.0.1
+    driver_opts:
+      com.docker.network.bridge.enable_icc: "true"
+      com.docker.network.bridge.enable_ip_masquerade: "false"
+      com.docker.network.driver.mtu: "1500"
+
+  # Management network for monitoring and administration
+  hive-management:
+    driver: bridge
+    internal: true
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.21.0.0/24
+          gateway: 172.21.0.1
+
+  # Public network for external access (nginx only)
+  hive-public:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.22.0.0/24
+          gateway: 172.22.0.1

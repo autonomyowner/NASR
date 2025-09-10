@@ -1,0 +1,62 @@
+# The HIVE TTS Service Dependencies
+# Streaming Text-to-Speech with Multi-Engine Support
+
+# Core Framework
+fastapi>=0.104.1
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
+websockets>=12.0
+
+# Deep Learning & Audio Processing
+torch>=2.1.0
+torchaudio>=2.1.0
+transformers>=4.35.0
+soundfile>=0.12.1
+librosa>=0.10.1
+numpy>=1.24.0
+scipy>=1.11.0
+
+# TTS Engines
+# XTTS (Coqui TTS)
+TTS>=0.22.0
+coqui-ai-tts>=0.22.0
+
+# Piper TTS (Fast, Lightweight)
+piper-tts>=1.2.0
+onnxruntime>=1.16.0
+onnxruntime-gpu>=1.16.0
+
+# Edge TTS (Microsoft)
+edge-tts>=6.1.10
+
+# SpeechT5 (HuggingFace)
+datasets>=2.14.0
+
+# Audio Processing & Optimization
+pyaudio>=0.2.11
+webrtcvad>=2.0.10
+noisereduce>=3.0.0
+pydub>=0.25.1
+
+# Voice Cloning & Enhancement
+phonemizer>=3.2.1
+espeak>=1.48.15
+montreal-forced-alignment>=2.2.17
+
+# Networking & Protocols
+redis>=5.0.1
+httpx>=0.25.0
+aiofiles>=23.2.1
+
+# Performance & Monitoring  
+prometheus-client>=0.18.0
+opentelemetry-api>=1.20.0
+opentelemetry-sdk>=1.20.0
+opentelemetry-instrumentation-fastapi>=0.41b0
+opentelemetry-exporter-jaeger-thrift>=1.20.0
+
+# Utilities
+pydantic>=2.5.0
+python-json-logger>=2.0.7
+aioredis>=2.0.1
+cachetools>=5.3.2

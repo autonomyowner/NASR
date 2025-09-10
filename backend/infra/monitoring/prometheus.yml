@@ -1,0 +1,210 @@
+# Prometheus Configuration for The HIVE Translation System
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+# Load rules once and periodically evaluate them
+rule_files:
+  - "alert-rules.yml"
+  - "recording-rules.yml"
+
+# Scrape configuration
+scrape_configs:
+  # LiveKit server metrics
+  - job_name: 'livekit'
+    static_configs:
+      - targets: ['livekit:9090']
+    scrape_interval: 5s
+    metrics_path: /metrics
+    
+  # STT service metrics
+  - job_name: 'stt-service'
+    static_configs:
+      - targets: ['stt-service:8001']
+    scrape_interval: 5s
+    metrics_path: /metrics
+    
+  # MT service metrics
+  - job_name: 'mt-service'
+    static_configs:
+      - targets: ['mt-service:8002'] 
+    scrape_interval: 5s
+    metrics_path: /metrics
+    
+  # TTS service metrics
+  - job_name: 'tts-service'
+    static_configs:
+      - targets: ['tts-service:8003']
+    scrape_interval: 5s  
+    metrics_path: /metrics
+    
+  # Translator workers
+  - job_name: 'translator-workers'
+    static_configs:
+      - targets: ['translator-worker:9090']
+    scrape_interval: 5s
+    metrics_path: /metrics
+    
+  # NGINX metrics (if enabled)
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx:9113']
+    scrape_interval: 15s
+    
+  # Redis metrics
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+    scrape_interval: 15s
+    
+  # Health monitor metrics
+  - job_name: 'health-monitor'
+    static_configs:
+      - targets: ['health-monitor:8080']
+    scrape_interval: 10s
+    metrics_path: /metrics/health
+    
+  # Node exporter for system metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 15s
+    
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 15s
+
+# Recording rules for aggregated metrics
+recording_rules:
+  - name: translation_pipeline
+    rules:
+      # Average TTFT across all sessions
+      - record: translation:ttft_p95
+        expr: histogram_quantile(0.95, rate(translation_ttft_duration_seconds_bucket[5m]))
+        
+      # Caption latency p95
+      - record: translation:caption_latency_p95
+        expr: histogram_quantile(0.95, rate(caption_latency_seconds_bucket[5m]))
+        
+      # Word retraction rate
+      - record: translation:retraction_rate
+        expr: rate(word_retractions_total[5m]) / rate(words_total[5m])
+        
+      # Service availability
+      - record: service:availability
+        expr: avg_over_time(up[5m])
+        
+      # Request rate per service
+      - record: service:request_rate
+        expr: rate(http_requests_total[5m])
+        
+      # Error rate per service  
+      - record: service:error_rate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m])
+
+# Alert rules
+alert_rules:
+  - name: slo_violations
+    rules:
+      # TTFT SLO violation
+      - alert: TTFTSLOBreach
+        expr: translation:ttft_p95 > 0.5  # 500ms
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Time-to-First-Translated-audio SLO breach"
+          description: "p95 TTFT is {{ $value }}s, above 450ms target"
+          
+      # Caption latency SLO violation
+      - alert: CaptionLatencySLOBreach
+        expr: translation:caption_latency_p95 > 0.25  # 250ms
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Caption latency SLO breach"
+          description: "p95 caption latency is {{ $value }}s, above 250ms target"
+          
+      # High retraction rate
+      - alert: HighRetractionRate
+        expr: translation:retraction_rate > 0.07  # 7%
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High word retraction rate"
+          description: "Word retraction rate is {{ $value | humanizePercentage }}, above 5% target"
+          
+  - name: service_health
+    rules:
+      # Service down
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "{{ $labels.job }} has been down for more than 1 minute"
+          
+      # High error rate
+      - alert: HighErrorRate
+        expr: service:error_rate > 0.01  # 1%
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate for {{ $labels.job }}"
+          description: "Error rate is {{ $value | humanizePercentage }} for {{ $labels.job }}"
+          
+      # High response time
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1.0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High response time for {{ $labels.job }}"
+          description: "95th percentile response time is {{ $value }}s for {{ $labels.job }}"
+          
+  - name: resource_usage
+    rules:
+      # High CPU usage
+      - alert: HighCPUUsage
+        expr: (100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)) > 80
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is {{ $value }}% on {{ $labels.instance }}"
+          
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is {{ $value }}% on {{ $labels.instance }}"
+          
+      # High GPU usage (if available)
+      - alert: HighGPUUsage
+        expr: nvidia_gpu_utilization > 90
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High GPU usage on {{ $labels.instance }}"
+          description: "GPU usage is {{ $value }}% on {{ $labels.instance }}"

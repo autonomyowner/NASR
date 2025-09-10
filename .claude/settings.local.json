@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "mcp__serena__get_symbols_overview"
+      "mcp__serena__get_symbols_overview",
+      "Bash(npm run build:*)",
+      "Bash(npm run dev:signaling:*)",
+      "mcp__serena__find_symbol",
+      "mcp__serena__list_dir"
     ],
     "deny": [],
     "ask": []

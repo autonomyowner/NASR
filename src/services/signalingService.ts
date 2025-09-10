@@ -43,6 +43,14 @@ export class SignalingService {
           reject(error)
         })
 
+        // Handle peer ID assignment from server
+        this.socket.on('peer-id', (peerId: string) => {
+          console.log('Received peer ID from server:', peerId)
+          this.currentPeerId = peerId
+          // Update localStorage with server-assigned peer ID
+          localStorage.setItem('travoice-peer-id', peerId)
+        })
+
         // Handle incoming calls
         this.socket.on('incoming-call', ({ from, offer }) => {
           console.log('Incoming call from:', from)
@@ -75,7 +83,7 @@ export class SignalingService {
         })
 
         // Handle online users
-        this.socket.on('users-online', (users: string[]) => {
+        this.socket.on('users-updated', (users: string[]) => {
           this.onlineUsers = users
           if (this.onUsersUpdated) {
             this.onUsersUpdated(users)

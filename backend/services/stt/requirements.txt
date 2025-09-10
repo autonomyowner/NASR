@@ -1,0 +1,40 @@
+# STT Service Dependencies
+# Core service
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+websockets==12.0
+pydantic==2.5.0
+numpy==1.24.3
+torch==2.1.0
+torchaudio==2.1.0
+
+# Speech processing
+faster-whisper==0.10.0
+openai-whisper==20231117
+
+# Voice Activity Detection  
+silero-vad==4.0.0
+webrtcvad==2.0.10
+
+# Audio processing
+librosa==0.10.1
+soundfile==0.12.1
+scipy==1.11.4
+
+# Performance monitoring
+psutil==5.9.6
+prometheus-client==0.19.0
+
+# Development & Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-websocket==0.0.2
+requests==2.31.0
+aiofiles==23.2.1
+
+# GPU support (optional)
+nvidia-ml-py==12.535.108
+
+# Utilities
+python-multipart==0.0.6
+python-json-logger==2.0.7

@@ -1,0 +1,297 @@
+# LiveKit Server Configuration
+# PRODUCTION-OPTIMIZED for <500ms end-to-end translation latency
+# Target: p95 TTFT ≤ 450ms, p95 caption latency ≤ 250ms
+
+port: 7880
+bind_addresses:
+  - ""
+
+# API Configuration
+api:
+  api_key: ${LIVEKIT_API_KEY}
+  secret_key: ${LIVEKIT_SECRET_KEY}
+
+# Room Configuration
+room:
+  # Enable room auto-creation
+  auto_create: true
+  
+  # Default room settings optimized for translation
+  default_settings:
+    # Maximum participants per room (optimized for translation workload)
+    max_participants: 12
+    
+    # Aggressive timeouts for low latency
+    empty_timeout: 3600s      # 1 hour for room cleanup
+    departure_timeout: 10s    # Fast cleanup on disconnect
+    
+    # Enable adaptive stream allocation
+    adaptive_stream: true
+    
+    # Enable data channels for real-time captions
+    enable_data_channel: true
+
+# RTC Configuration (WebRTC) - OPTIMIZED FOR UDP-FIRST
+rtc:
+  # Expanded UDP port range for better connectivity
+  port_range_start: 50000
+  port_range_end: 50199
+  
+  # Disable ICE-Lite for better NAT traversal
+  use_ice_lite: false
+  
+  # Optimized STUN/TURN configuration with fallback strategy
+  stun_servers:
+    - stun:${TURN_SERVER_HOST:-coturn}:3478
+    - stun:stun.l.google.com:19302
+    - stun:stun1.l.google.com:19302
+    - stun:stun.cloudflare.com:3478
+    
+  turn_servers:
+    # Primary TURN server (co-located)
+    - host: ${TURN_SERVER_HOST:-coturn}
+      port: 3478
+      protocol: udp
+      username: ${TURN_USERNAME}
+      credential: ${TURN_CREDENTIAL}
+    # TCP fallback
+    - host: ${TURN_SERVER_HOST:-coturn}
+      port: 3478
+      protocol: tcp
+      username: ${TURN_USERNAME}
+      credential: ${TURN_CREDENTIAL}
+      
+  # ICE configuration optimized for real-time performance
+  ice:
+    # Prefer UDP for minimal latency
+    prefer_udp: true
+    # Enable all candidate types
+    include_loopback: true
+    include_link_local: true
+    # Faster candidate gathering
+    gathering_timeout: 3s
+    # Connection establishment timeout
+    connection_timeout: 8s
+    
+  # Aggressive congestion control for low latency
+  congestion_control:
+    # Enable adaptive bitrate with tight bounds
+    adaptive_bitrate: true
+    # Start with higher bitrate for speech quality
+    initial_bitrate: 48000    # 48 kbps (optimal for Opus speech)
+    max_bitrate: 128000       # 128 kbps max to prevent buffering
+    min_bitrate: 24000        # 24 kbps minimum for intelligible speech
+    # Fast adaptation to network changes
+    adaptation_speed: fast
+
+# Audio Configuration - ULTRA-LOW LATENCY OPTIMIZATION
+audio:
+  # Opus codec exclusively for lowest latency
+  codecs:
+    - opus
+    
+  # Opus-specific settings for <50ms internal latency
+  opus:
+    # Minimal frame duration for ultra-low latency
+    frame_duration: 10ms      # Reduced from 20ms for faster processing
+    # Disable DTX for consistent latency (slight bandwidth trade-off)
+    dtx: false
+    # Optimized bitrate for speech translation
+    bitrate: 48000            # 48 kbps optimal balance
+    # Enable forward error correction
+    fec: true
+    # Complexity level optimized for real-time
+    complexity: 5             # Medium complexity for latency/quality balance
+    
+  # Minimal audio processing to reduce latency
+  processing:
+    # Essential for VAD but add latency - keep minimal
+    audio_level_indication: true
+    # Disable heavy processing that adds latency
+    noise_suppression: false  # Handle in client or STT service
+    echo_cancellation: false  # Handle client-side
+    auto_gain_control: false  # Handle client-side
+    
+  # Buffer configuration for minimal latency
+  buffering:
+    # Minimal jitter buffer
+    min_playout_delay: 20ms
+    max_playout_delay: 100ms
+    # Fast adaptation
+    adaptation_rate: high
+
+# Video Configuration - COMPLETELY DISABLED for CPU optimization
+video:
+  enabled: false
+
+# Redis Configuration for scaling and session state
+redis:
+  address: ${REDIS_URL:-redis://redis:6379}
+  db: 0
+  # Connection pool optimization
+  pool_size: 10
+  max_idle_conns: 5
+  
+# Node Configuration for clustering
+node:
+  # Node IP for clustering (single node setup)
+  ip: ${NODE_IP:-127.0.0.1}
+  # Node region for latency optimization
+  region: ${NODE_REGION:-local}
+  
+# Webhook Configuration for room lifecycle management
+webhook:
+  # Webhook URLs for room events (translator worker coordination)
+  urls:
+    - ${WEBHOOK_URL:-http://translator-worker:8080/webhook}
+  api_key: ${LIVEKIT_API_KEY}
+  # Events to monitor for translator deployment
+  events:
+    - room_started
+    - participant_joined
+    - participant_left
+    - track_published
+    - track_unpublished
+
+# Logging Configuration - PRODUCTION OPTIMIZED
+logging:
+  # Minimal log level for performance
+  level: ${LOG_LEVEL:-info}
+  # Structured JSON logging for observability
+  json: true
+  # Log sampling to reduce I/O overhead
+  sample: true
+  sample_rate: 0.1  # 10% sampling rate
+
+# Performance Tuning - OPTIMIZED FOR TRANSLATION WORKLOAD
+performance:
+  # CPU optimization
+  num_cpus: 0  # Use all available CPUs
+  
+  # Memory limits tuned for audio-only processing
+  memory_limit: ${MEMORY_LIMIT:-1GB}
+  
+  # Connection limits optimized for translation rooms
+  max_connections_per_ip: 20
+  max_rooms_per_node: 50
+  
+  # Garbage collection tuning
+  gc_target_percent: 100  # More frequent GC for consistent latency
+
+# Security Configuration - PRODUCTION HARDENED
+security:
+  # Enable strict JWT validation with required claims
+  strict_jwt: true
+  
+  # Rate limiting to prevent abuse
+  rate_limit:
+    enabled: true
+    requests_per_minute: 500    # Conservative for translation use case
+    burst: 50                   # Allow bursts for room joining
+    
+  # CORS settings for production deployment
+  cors:
+    allow_origins: 
+      - "https://localhost:5173"          # Local development
+      - "https://localhost:3000"          # Alternative dev port
+      - "https://*.thehive.app"           # Production domains
+      - "https://thehive-*.vercel.app"    # Vercel deployments
+    allow_headers:
+      - "Authorization"
+      - "Content-Type"
+      - "x-lk-*"
+      - "Origin"
+    allow_methods:
+      - "GET"
+      - "POST"
+      - "OPTIONS"
+
+# Health Check Configuration
+health:
+  port: 7880        # Same port as main service
+  path: /health
+  timeout: 5s
+
+# Metrics and Monitoring - COMPREHENSIVE OBSERVABILITY
+metrics:
+  # Prometheus metrics for SLO monitoring
+  prometheus:
+    enabled: true
+    port: 9090
+    path: /metrics
+    # Additional metrics for translation monitoring
+    include_room_metrics: true
+    include_participant_metrics: true
+    include_track_metrics: true
+    
+  # Enable detailed metrics for SLO tracking
+  detailed: true
+
+# Signal Relay Configuration - TRANSLATOR WORKER OPTIMIZATION
+signal_relay:
+  # Enable data channel messaging for real-time captions
+  data_channels: true
+  
+  # Stream tracking for translator participant management
+  stream_tracker:
+    enabled: true
+    # Track audio streams specifically
+    track_audio: true
+    track_video: false
+    
+  # Message routing optimization
+  message_routing:
+    # Enable direct routing for translator workers
+    direct_routing: true
+    # Buffer size for message queuing
+    buffer_size: 1000
+
+# Translation-Specific Configurations
+translation:
+  # Worker coordination settings
+  worker_coordination:
+    # Auto-assign translator workers to rooms
+    auto_assign: true
+    # Maximum workers per room
+    max_workers_per_room: 2
+    # Worker selection strategy (round-robin, least-loaded)
+    selection_strategy: "least-loaded"
+    
+  # Audio routing optimization for co-located workers
+  audio_routing:
+    # Enable direct audio forwarding to co-located workers
+    direct_forwarding: true
+    # Minimize audio copying for performance
+    zero_copy_forwarding: true
+    
+  # Language configuration
+  languages:
+    # Supported translation languages
+    supported: ${TARGET_LANGUAGES:-es,fr,de,it,pt,ar,zh,ja,ko,ru}
+    # Default source language
+    default_source: "en"
+
+# Egress Configuration - OPTIONAL RECORDING
+egress:
+  # File output for debugging/monitoring
+  file_output: ${ENABLE_RECORDING:-false}
+  # Output directory
+  output_dir: ${RECORDING_OUTPUT_DIR:-/data/recordings}
+  # Segment duration for efficient storage
+  segment_duration: 300s  # 5 minutes
+
+# Development Override Settings
+development:
+  # Disable in production
+  disable_strict_config: false
+  # Enable debug endpoints
+  debug_endpoints: ${DEBUG_MODE:-false}
+  
+# Production Deployment Settings
+production:
+  # Enable all security features
+  strict_mode: true
+  # Disable development endpoints
+  debug_disabled: true
+  # Enable audit logging
+  audit_log: true

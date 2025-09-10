@@ -1,0 +1,459 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "The HIVE - SLO Monitoring Dashboard",
+    "tags": ["translation", "slo", "performance"],
+    "style": "dark",
+    "timezone": "browser",
+    "refresh": "5s",
+    "schemaVersion": 30,
+    "version": 1,
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": ["5s", "10s", "30s", "1m", "5m"],
+      "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d"]
+    },
+    "annotations": {
+      "list": [
+        {
+          "name": "SLO Violations",
+          "datasource": "Prometheus",
+          "enable": true,
+          "expr": "ALERTS{alertname=~\".*SLO.*\"}",
+          "iconColor": "red",
+          "titleFormat": "{{alertname}}",
+          "textFormat": "{{description}}"
+        }
+      ]
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "SLO Overview",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 0.4},
+                {"color": "red", "value": 0.5}
+              ]
+            },
+            "unit": "s"
+          }
+        },
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"],
+            "fields": ""
+          },
+          "orientation": "auto",
+          "textMode": "auto",
+          "colorMode": "background"
+        },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(translation_ttft_duration_seconds_bucket[5m]))",
+            "refId": "A",
+            "legendFormat": "TTFT p95 (Target: ≤450ms)"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(caption_latency_seconds_bucket[5m]))",
+            "refId": "B", 
+            "legendFormat": "Caption Latency p95 (Target: ≤250ms)"
+          },
+          {
+            "expr": "rate(word_retractions_total[5m]) / rate(words_total[5m]) * 100",
+            "refId": "C",
+            "legendFormat": "Word Retraction Rate % (Target: <5%)"
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Time-to-First-Token (TTFT) - p95 Latency",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 10,
+              "gradientMode": "none",
+              "lineWidth": 2,
+              "pointSize": 5,
+              "scaleDistribution": {"type": "linear"},
+              "showPoints": "never",
+              "spanNulls": false,
+              "stacking": {"mode": "none", "group": "A"},
+              "thresholdsStyle": {"mode": "line"}
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "red", "value": 0.45}
+              ]
+            },
+            "unit": "s"
+          }
+        },
+        "options": {
+          "tooltip": {"mode": "single", "sort": "none"},
+          "legend": {"displayMode": "visible", "placement": "bottom"}
+        },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(translation_ttft_duration_seconds_bucket[5m]))",
+            "refId": "A",
+            "legendFormat": "TTFT p95"
+          },
+          {
+            "expr": "0.45",
+            "refId": "B",
+            "legendFormat": "SLO Target (450ms)"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Caption Latency - p95",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 10,
+              "gradientMode": "none",
+              "lineWidth": 2,
+              "pointSize": 5,
+              "scaleDistribution": {"type": "linear"},
+              "showPoints": "never",
+              "spanNulls": false,
+              "stacking": {"mode": "none", "group": "A"},
+              "thresholdsStyle": {"mode": "line"}
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "red", "value": 0.25}
+              ]
+            },
+            "unit": "s"
+          }
+        },
+        "options": {
+          "tooltip": {"mode": "single", "sort": "none"},
+          "legend": {"displayMode": "visible", "placement": "bottom"}
+        },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(caption_latency_seconds_bucket[5m]))",
+            "refId": "A",
+            "legendFormat": "Caption Latency p95"
+          },
+          {
+            "expr": "0.25",
+            "refId": "B",
+            "legendFormat": "SLO Target (250ms)"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Word Retraction Rate",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 10,
+              "gradientMode": "none",
+              "lineWidth": 2,
+              "pointSize": 5,
+              "scaleDistribution": {"type": "linear"},
+              "showPoints": "never",
+              "spanNulls": false,
+              "stacking": {"mode": "none", "group": "A"},
+              "thresholdsStyle": {"mode": "line"}
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "red", "value": 5}
+              ]
+            },
+            "unit": "percent"
+          }
+        },
+        "options": {
+          "tooltip": {"mode": "single", "sort": "none"},
+          "legend": {"displayMode": "visible", "placement": "bottom"}
+        },
+        "targets": [
+          {
+            "expr": "rate(word_retractions_total[5m]) / rate(words_total[5m]) * 100",
+            "refId": "A",
+            "legendFormat": "Retraction Rate %"
+          },
+          {
+            "expr": "5",
+            "refId": "B", 
+            "legendFormat": "SLO Target (<5%)"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Translation Pipeline Latencies",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 10,
+              "gradientMode": "none",
+              "lineWidth": 2,
+              "pointSize": 5,
+              "scaleDistribution": {"type": "linear"},
+              "showPoints": "never",
+              "spanNulls": false,
+              "stacking": {"mode": "none", "group": "A"}
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green", "value": null}
+              ]
+            },
+            "unit": "s"
+          }
+        },
+        "options": {
+          "tooltip": {"mode": "single", "sort": "none"},
+          "legend": {"displayMode": "visible", "placement": "bottom"}
+        },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(stt_processing_duration_seconds_bucket[5m]))",
+            "refId": "A",
+            "legendFormat": "STT p95"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(mt_processing_duration_seconds_bucket[5m]))",
+            "refId": "B",
+            "legendFormat": "MT p95"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(tts_processing_duration_seconds_bucket[5m]))",
+            "refId": "C",
+            "legendFormat": "TTS p95"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Active Translation Sessions",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 24},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 5},
+                {"color": "red", "value": 10}
+              ]
+            },
+            "unit": "short"
+          }
+        },
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"],
+            "fields": ""
+          },
+          "orientation": "auto",
+          "textMode": "auto",
+          "colorMode": "background"
+        },
+        "targets": [
+          {
+            "expr": "sum(livekit_participants_active)",
+            "refId": "A",
+            "legendFormat": "Active Sessions"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Service Health Status",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 18, "x": 6, "y": 24},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "mappings": [
+              {"options": {"0": {"text": "DOWN", "color": "red"}}, "type": "value"},
+              {"options": {"1": {"text": "UP", "color": "green"}}, "type": "value"}
+            ],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "red", "value": null},
+                {"color": "green", "value": 1}
+              ]
+            },
+            "unit": "short"
+          }
+        },
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"],
+            "fields": ""
+          },
+          "orientation": "horizontal",
+          "textMode": "name",
+          "colorMode": "background"
+        },
+        "targets": [
+          {
+            "expr": "service_up{service=\"stt-service\"}",
+            "refId": "A",
+            "legendFormat": "STT Service"
+          },
+          {
+            "expr": "service_up{service=\"mt-service\"}",
+            "refId": "B",
+            "legendFormat": "MT Service"
+          },
+          {
+            "expr": "service_up{service=\"tts-service\"}",
+            "refId": "C", 
+            "legendFormat": "TTS Service"
+          },
+          {
+            "expr": "up{job=\"livekit\"}",
+            "refId": "D",
+            "legendFormat": "LiveKit SFU"
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Translation Quality Score",
+        "type": "gauge",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 28},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "red", "value": null},
+                {"color": "yellow", "value": 0.7},
+                {"color": "green", "value": 0.85}
+              ]
+            },
+            "unit": "percentunit",
+            "min": 0,
+            "max": 1
+          }
+        },
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["mean"],
+            "fields": ""
+          },
+          "orientation": "auto",
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true
+        },
+        "targets": [
+          {
+            "expr": "avg(translation_confidence_score)",
+            "refId": "A",
+            "legendFormat": "Average Translation Confidence"
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Audio Quality Score",
+        "type": "gauge", 
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 28},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "red", "value": null},
+                {"color": "yellow", "value": 0.6},
+                {"color": "green", "value": 0.8}
+              ]
+            },
+            "unit": "percentunit",
+            "min": 0,
+            "max": 1
+          }
+        },
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["mean"],
+            "fields": ""
+          },
+          "orientation": "auto",
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true
+        },
+        "targets": [
+          {
+            "expr": "avg(audio_quality_score)",
+            "refId": "A",
+            "legendFormat": "Average Audio Quality"
+          }
+        ]
+      }
+    ]
+  }
+}

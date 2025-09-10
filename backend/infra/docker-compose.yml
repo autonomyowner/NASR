@@ -1,0 +1,325 @@
+# The HIVE Translation Pipeline Infrastructure
+# Complete service stack for real-time translation with STT, MT, and TTS
+
+version: '3.8'
+
+services:
+  # LiveKit SFU (Selective Forwarding Unit) - PERFORMANCE OPTIMIZED
+  livekit:
+    image: livekit/livekit-server:v1.4.3
+    container_name: livekit-server
+    ports:
+      - "7880:7880"   # HTTP API
+      - "7881:7881"   # WebRTC
+      - "50000-50199:50000-50199/udp"  # RTC UDP port range
+    volumes:
+      - ./livekit/server-optimized.yaml:/etc/livekit.yaml
+    environment:
+      - LIVEKIT_CONFIG=/etc/livekit.yaml
+      - NODE_IP=172.20.0.10          # Fixed IP for co-location
+      - MEMORY_LIMIT=2GB             # Memory optimization
+      - GOMAXPROCS=4                 # CPU optimization
+    networks:
+      hive-network:
+        ipv4_address: 172.20.0.10    # Static IP for predictable routing
+    restart: unless-stopped
+    # PERFORMANCE OPTIMIZATIONS
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+    # NETWORK OPTIMIZATIONS
+    sysctls:
+      - net.core.rmem_max=26214400   # 25MB receive buffer
+      - net.core.wmem_max=26214400   # 25MB send buffer
+      - net.ipv4.udp_mem=65536 131072 262144
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+
+  # Redis - OPTIMIZED FOR LOW-LATENCY CACHING
+  redis:
+    image: redis:7-alpine
+    container_name: hive-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 1gb
+      --maxmemory-policy allkeys-lru
+      --tcp-keepalive 60
+      --timeout 0
+      --tcp-backlog 511
+    networks:
+      hive-network:
+        ipv4_address: 172.20.0.20       # Centralized for all services
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1.5G
+        reservations:
+          memory: 512M
+
+  # CoTURN for NAT traversal - ULTRA-LOW LATENCY OPTIMIZED
+  coturn:
+    image: coturn/coturn:4.6.2
+    container_name: hive-coturn
+    ports:
+      - "3478:3478/udp"
+      - "49152-49300:49152-49300/udp"  # Expanded range
+    volumes:
+      - ./coturn/turnserver.conf:/etc/coturn/turnserver.conf
+    environment:
+      - TURN_USERNAME=hive
+      - TURN_PASSWORD=hive2024
+      - TURN_REALM=thehive
+      - EXTERNAL_IP=127.0.0.1          # Set to your external IP
+    command: turnserver -c /etc/coturn/turnserver.conf
+    networks:
+      hive-network:
+        ipv4_address: 172.20.0.5       # Co-locate near LiveKit
+    restart: unless-stopped
+    # NETWORK PERFORMANCE OPTIMIZATION
+    sysctls:
+      - net.core.rmem_max=16777216     # 16MB UDP receive buffer
+      - net.core.wmem_max=16777216     # 16MB UDP send buffer
+      - net.core.netdev_max_backlog=2500
+    ulimits:
+      nofile:
+        soft: 32768
+        hard: 32768
+
+  # STT Service - CO-LOCATED WITH LIVEKIT for <50ms routing
+  stt-service:
+    build: ../services/stt/
+    container_name: hive-stt
+    ports:
+      - "8001:8001"
+    environment:
+      - MODEL_SIZE=base.en
+      - DEVICE=cuda
+      - CHUNK_DURATION_MS=150          # Reduced for lower latency
+      - AGREEMENT_THRESHOLD=1          # Faster agreement for real-time
+      - STABILITY_WINDOW=2             # Reduced window for speed
+      - LIVEKIT_URL=ws://172.20.0.10:7880  # Direct co-located routing
+      - REDIS_URL=redis://172.20.0.20:6379
+    volumes:
+      - stt_models:/app/models
+    depends_on:
+      - redis
+      - livekit
+    networks:
+      hive-network:
+        ipv4_address: 172.20.0.11      # Adjacent to LiveKit
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    # IPC OPTIMIZATION for co-located services
+    ipc: "container:livekit-server"     # Share IPC for faster communication
+
+  # MT Service - CO-LOCATED TRANSLATION PIPELINE
+  mt-service:
+    build: ../services/mt/
+    container_name: hive-mt
+    ports:
+      - "8002:8002"
+    environment:
+      - MODEL_CACHE_DIR=/app/models
+      - REDIS_URL=redis://172.20.0.20:6379
+      - CONTEXT_WINDOW_SIZE=8          # Optimized for low latency
+      - STT_SERVICE_URL=http://172.20.0.11:8001  # Direct routing
+      - TTS_SERVICE_URL=http://172.20.0.13:8003  # Direct routing
+    volumes:
+      - mt_models:/app/models
+    depends_on:
+      - redis
+      - stt-service
+    networks:
+      hive-network:
+        ipv4_address: 172.20.0.12      # Sequential co-location
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+        reservations:
+          memory: 1.5G
+
+  # TTS Service - STREAMING OPTIMIZED CO-LOCATION
+  tts-service:
+    build: ../services/tts/
+    container_name: hive-tts
+    ports:
+      - "8003:8003"
+    environment:
+      - ENGINE=xtts
+      - DEVICE=cuda
+      - VOICE_CACHE_DIR=/app/voices
+      - STREAMING_ENABLED=true
+      - CHUNK_SIZE=1024               # Optimized chunk size for streaming
+      - REDIS_URL=redis://172.20.0.20:6379
+      - LIVEKIT_URL=ws://172.20.0.10:7880  # Direct audio publishing
+      - JAEGER_ENDPOINT=http://172.20.0.50:14268/api/traces
+    volumes:
+      - tts_voices:/app/voices
+      - tts_models:/app/models
+    depends_on:
+      - redis
+      - jaeger
+      - livekit
+    networks:
+      hive-network:
+        ipv4_address: 172.20.0.13      # Adjacent to MT service
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+        reservations:
+          memory: 3G
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    # AUDIO OPTIMIZATION
+    ipc: "container:livekit-server"     # Share audio buffers
+
+  # Prometheus (Metrics Collection)
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: hive-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/alert-rules.yml:/etc/prometheus/alert-rules.yml
+      - ./monitoring/recording-rules.yml:/etc/prometheus/recording-rules.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    networks:
+      hive-network:
+        ipv4_address: 172.20.0.40
+    restart: unless-stopped
+
+  # Grafana (Metrics Visualization)
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: hive-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=hive2024
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=redis-datasource,jaeger,loki
+      - GF_FEATURE_TOGGLES_ENABLE=tracing
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - prometheus
+      - jaeger
+    networks:
+      hive-network:
+        ipv4_address: 172.20.0.41
+    restart: unless-stopped
+
+  # Jaeger (Distributed Tracing)
+  jaeger:
+    image: jaegertracing/all-in-one:1.47.0
+    container_name: hive-jaeger
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "14268:14268"  # HTTP collector
+      - "6831:6831/udp"  # Agent UDP
+      - "6832:6832/udp"  # Agent UDP
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - SPAN_STORAGE_TYPE=memory
+      - MEMORY_MAX_TRACES=50000
+    networks:
+      hive-network:
+        ipv4_address: 172.20.0.50
+    restart: unless-stopped
+
+  # Health Monitor Service
+  health-monitor:
+    build: ../observability/
+    container_name: hive-health-monitor
+    ports:
+      - "8080:8080"
+    environment:
+      - STT_SERVICE_URL=http://172.20.0.11:8001
+      - MT_SERVICE_URL=http://172.20.0.12:8002
+      - TTS_SERVICE_URL=http://172.20.0.13:8003
+      - LIVEKIT_URL=http://172.20.0.10:7880
+      - REDIS_URL=redis://172.20.0.20:6379
+    depends_on:
+      - redis
+      - prometheus
+    networks:
+      hive-network:
+        ipv4_address: 172.20.0.60
+    restart: unless-stopped
+
+  # Nginx (Reverse Proxy & Load Balancer)
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: hive-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - stt-service
+      - mt-service
+      - tts-service
+      - livekit
+    networks:
+      - hive-network
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+    driver: local
+  stt_models:
+    driver: local
+  mt_models:
+    driver: local
+  tts_voices:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  hive-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16

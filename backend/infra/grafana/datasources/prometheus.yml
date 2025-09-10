@@ -1,0 +1,97 @@
+# Grafana Datasource Configuration for The HIVE Translation System
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+    basicAuth: false
+    
+    # Prometheus-specific settings
+    jsonData:
+      httpMethod: POST
+      queryTimeout: 60s
+      timeInterval: 5s
+      
+      # Custom query parameters
+      customQueryParameters: ''
+      
+      # Exemplars configuration
+      exemplarTraceIdDestinations:
+        - name: trace_id
+          datasourceUid: 'jaeger_uid'
+          url: 'http://localhost:16686/trace/$${__value.raw}'
+          
+    # Health check configuration
+    readOnly: false
+    
+  - name: Jaeger
+    uid: jaeger_uid
+    type: jaeger
+    access: proxy
+    url: http://jaeger:16686
+    editable: true
+    
+    # Jaeger-specific settings
+    jsonData:
+      tracesToLogs:
+        datasourceUid: 'loki_uid'
+        tags: ['job', 'instance', 'pod', 'namespace']
+        mappedTags: [{ key: 'service.name', value: 'service' }]
+        mapTagNamesEnabled: false
+        spanStartTimeShift: '1h'
+        spanEndTimeShift: '1h'
+        filterByTraceID: false
+        filterBySpanID: false
+        
+      nodeGraph:
+        enabled: true
+        
+  - name: Loki
+    uid: loki_uid  
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    editable: true
+    
+    # Loki-specific settings
+    jsonData:
+      maxLines: 1000
+      derivedFields:
+        - datasourceUid: 'jaeger_uid'
+          matcherRegex: 'trace_id=(\w+)'
+          name: 'TraceID'
+          url: 'http://localhost:16686/trace/$${__value.raw}'
+          
+  # Additional monitoring datasources
+  - name: InfluxDB
+    type: influxdb
+    access: proxy
+    url: http://influxdb:8086
+    database: 'translation_metrics'
+    user: 'grafana'
+    secureJsonData:
+      password: 'grafana_password'
+    editable: true
+    
+    # InfluxDB-specific settings
+    jsonData:
+      timeInterval: '10s'
+      httpMode: 'GET'
+      
+  # Redis datasource for real-time metrics
+  - name: Redis
+    type: redis-datasource
+    access: proxy
+    url: redis://redis:6379
+    editable: true
+    
+    jsonData:
+      client: 'standalone'
+      poolSize: 5
+      timeout: 10
+      pingInterval: 0
+      pipelineWindow: 0

@@ -15,14 +15,9 @@ export interface PeerConnectionActions {
 }
 
 export const usePeerConnection = (): PeerConnectionState & PeerConnectionActions => {
-  const [peerId] = useState(() => {
-    // Get or create persistent peer ID
-    const stored = localStorage.getItem('travoice-peer-id')
-    if (stored) return stored
-    
-    const newId = uuidv4()
-    localStorage.setItem('travoice-peer-id', newId)
-    return newId
+  const [peerId, setPeerId] = useState(() => {
+    // Get stored peer ID, but don't create one - wait for server assignment
+    return localStorage.getItem('travoice-peer-id') || ''
   })
 
   const [isConnected, setIsConnected] = useState(false)
@@ -33,12 +28,12 @@ export const usePeerConnection = (): PeerConnectionState & PeerConnectionActions
     try {
       setConnectionError(null)
       await signalingService.connect()
-      signalingService.register(peerId)
+      // Peer ID will be assigned automatically by server
     } catch (error) {
       console.error('Failed to connect to signaling server:', error)
       setConnectionError(error instanceof Error ? error.message : 'Connection failed')
     }
-  }, [peerId])
+  }, [])
 
   const copyPeerId = useCallback(async () => {
     try {
@@ -71,6 +66,19 @@ export const usePeerConnection = (): PeerConnectionState & PeerConnectionActions
       signalingService.disconnect()
     }
   }, [connect])
+
+  // Listen for peer ID updates from signaling service
+  useEffect(() => {
+    const checkPeerIdUpdate = () => {
+      const currentStoredId = localStorage.getItem('travoice-peer-id')
+      if (currentStoredId && currentStoredId !== peerId) {
+        setPeerId(currentStoredId)
+      }
+    }
+
+    const interval = setInterval(checkPeerIdUpdate, 100)
+    return () => clearInterval(interval)
+  }, [peerId])
 
   return {
     peerId,
