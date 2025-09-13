@@ -230,6 +230,19 @@ io.on('connection', (socket) => {
   })
 })
 
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Simple Signaling Server for WebRTC Voice Calls',
+    version: '1.0.0',
+    endpoints: {
+      health: '/health',
+      stats: '/stats'
+    },
+    timestamp: new Date().toISOString()
+  })
+})
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({
