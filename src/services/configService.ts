@@ -19,11 +19,16 @@ export const getConfig = (): AppConfig => {
 
   try {
     const iceServersEnv = import.meta.env.VITE_ICE_SERVERS;
-    if (iceServersEnv) {
+    if (iceServersEnv && iceServersEnv.trim()) {
       iceServers = JSON.parse(iceServersEnv);
     }
   } catch (error) {
     console.warn('Failed to parse VITE_ICE_SERVERS, using default STUN servers:', error);
+    // Ensure we have valid ICE servers even if parsing fails
+    iceServers = [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' }
+    ];
   }
 
   return {
