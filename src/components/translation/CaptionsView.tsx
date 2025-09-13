@@ -43,7 +43,7 @@ const CaptionsView: React.FC<CaptionsViewProps> = ({
   const bottomRef = useRef<HTMLDivElement>(null);
   const [selectedCaption, setSelectedCaption] = useState<string | null>(null);
   const [isUserScrolling, setIsUserScrolling] = useState(false);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout>();
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Detect user scrolling to prevent auto-scroll interruption
   const handleScroll = useCallback(() => {

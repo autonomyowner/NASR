@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "dev:signaling": "cd signaling-server && npm run dev",
+    "dev:simple": "cd signaling-server && npm run simple:dev",
     "dev:both": "concurrently \"npm run dev:signaling\" \"npm run dev\"",
+    "dev:simple:both": "concurrently \"npm run dev:simple\" \"npm run dev\"",
     "build": "tsc -b && vite build",
     "build:skip-types": "vite build",
     "build:production": "NODE_ENV=production npm run build:skip-types",
@@ -18,6 +20,7 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "framer-motion": "^12.23.12",
     "livekit-client": "^2.15.6",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

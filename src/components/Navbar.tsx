@@ -37,6 +37,12 @@ const Navbar = () => {
             >
               Call
             </Link>
+            <Link 
+              to="/roadmap" 
+              className={`transition-colors ${location.pathname === '/roadmap' ? 'text-cyan-400' : 'text-white hover:text-cyan-400'}`}
+            >
+              Roadmap
+            </Link>
             <a 
               href="#contact" 
               className="btn-primary"
@@ -84,6 +90,13 @@ const Navbar = () => {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Call
+              </Link>
+              <Link 
+                to="/roadmap" 
+                className={`block px-3 py-2 transition-colors ${location.pathname === '/roadmap' ? 'text-cyan-400' : 'text-white hover:text-cyan-400'}`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Roadmap
               </Link>
               <a 
                 href="#contact" 

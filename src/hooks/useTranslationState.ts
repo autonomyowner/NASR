@@ -10,9 +10,7 @@ import type {
   TranslationState, 
   TranslationMode, 
   Caption, 
-  TranslationSession,
-  Language,
-  Voice 
+  TranslationSession
 } from '../types/translation';
 
 interface UseTranslationStateOptions {
@@ -88,7 +86,7 @@ export const useTranslationState = (
             selectedVoice: parsedState.selectedVoice || '',
             currentLatency: undefined,
             isTranslating: false,
-            error: null
+            error: undefined
           };
         }
       } catch (error) {
@@ -104,7 +102,7 @@ export const useTranslationState = (
       selectedVoice: '',
       currentLatency: undefined,
       isTranslating: false,
-      error: null
+      error: undefined
     };
   }, [initialMode, initialTargetLanguage, persistToStorage, storageKey]);
 
@@ -140,7 +138,7 @@ export const useTranslationState = (
       ...prev,
       mode,
       isEnabled: mode !== 'off',
-      error: mode === 'off' ? null : prev.error
+      error: mode === 'off' ? undefined : prev.error
     }));
   }, []);
 
@@ -246,7 +244,7 @@ export const useTranslationState = (
   }, []);
 
   const setError = useCallback((error: string | null) => {
-    setState(prev => ({ ...prev, error }));
+    setState(prev => ({ ...prev, error: error || undefined }));
   }, []);
 
   const setLatency = useCallback((latency: number) => {

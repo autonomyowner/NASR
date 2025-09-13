@@ -1,21 +1,23 @@
 {
-  "name": "travoice-signaling-server",
+  "name": "simple-signaling-server",
   "version": "1.0.0",
-  "description": "Simple WebRTC signaling server for Travoice",
-  "main": "server.js",
+  "description": "Simple WebRTC signaling server for voice calls",
+  "main": "simple-server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "start": "node simple-server.js",
+    "dev": "nodemon simple-server.js",
+    "simple": "node simple-server.js",
+    "simple:dev": "nodemon simple-server.js"
   },
   "dependencies": {
-    "socket.io": "^4.7.2",
     "express": "^4.18.2",
+    "socket.io": "^4.8.1",
     "cors": "^2.8.5"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
   },
-  "keywords": ["webrtc", "signaling", "socket.io"],
-  "author": "NASR",
-  "license": "MIT"
+  "engines": {
+    "node": ">=18.0.0"
+  }
 }

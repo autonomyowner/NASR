@@ -40,7 +40,7 @@ const PushToTranslateButton: React.FC<PushToTranslateButtonProps> = ({
   const [rippleEffect, setRippleEffect] = useState<{ x: number; y: number; id: string } | null>(null);
   const [pressStartTime, setPressStartTime] = useState<number | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const rippleTimeoutRef = useRef<NodeJS.Timeout>();
+  const rippleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Haptic feedback function
   const triggerHapticFeedback = useCallback((type: 'start' | 'end' = 'start') => {
@@ -470,7 +470,7 @@ const PushToTranslateButton: React.FC<PushToTranslateButtonProps> = ({
       </div>
       
       {/* Custom ripple animation styles */}
-      <style jsx>{`
+      <style>{`
         @keyframes ripple {
           0% {
             transform: scale(0);

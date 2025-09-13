@@ -150,9 +150,9 @@ export const useLanguagePreferences = (
   }, [availableVoices]);
 
   // Get default voice for a language
-  const getDefaultVoiceForLanguage = useCallback((languageCode: string): Voice | null => {
+  const getDefaultVoiceForLanguage = useCallback((languageCode: string): Voice | undefined => {
     const voices = getVoicesForLanguage(languageCode);
-    return voices.find(voice => voice.isDefault) || voices[0] || null;
+    return voices.find(voice => voice.isDefault) || voices[0];
   }, [getVoicesForLanguage]);
 
   // Update preferences
@@ -175,7 +175,7 @@ export const useLanguagePreferences = (
         
         // Remove preferences for languages no longer in target list
         Object.keys(newPreferredVoice).forEach(langCode => {
-          if (!updates.targetLanguages.includes(langCode)) {
+          if (updates.targetLanguages && !updates.targetLanguages.includes(langCode)) {
             delete newPreferredVoice[langCode];
           }
         });
@@ -232,17 +232,17 @@ export const useLanguagePreferences = (
   }, [preferences.preferredVoice, updatePreference]);
 
   // Get language by code
-  const getLanguageByCode = useCallback((code: string): Language | null => {
-    return availableLanguages.find(lang => lang.code === code) || null;
+  const getLanguageByCode = useCallback((code: string): Language | undefined => {
+    return availableLanguages.find(lang => lang.code === code);
   }, [availableLanguages]);
 
   // Get voice by ID
-  const getVoiceById = useCallback((id: string): Voice | null => {
-    return availableVoices.find(voice => voice.id === id) || null;
+  const getVoiceById = useCallback((id: string): Voice | undefined => {
+    return availableVoices.find(voice => voice.id === id);
   }, [availableVoices]);
 
   // Get preferred voice for language
-  const getPreferredVoiceForLanguage = useCallback((languageCode: string): Voice | null => {
+  const getPreferredVoiceForLanguage = useCallback((languageCode: string): Voice | undefined => {
     const preferredVoiceId = preferences.preferredVoice[languageCode];
     if (preferredVoiceId) {
       return getVoiceById(preferredVoiceId);
@@ -250,34 +250,6 @@ export const useLanguagePreferences = (
     return getDefaultVoiceForLanguage(languageCode);
   }, [preferences.preferredVoice, getVoiceById, getDefaultVoiceForLanguage]);
 
-  // Validate preferences
-  const validatePreferences = useCallback(() => {
-    const issues: string[] = [];
-
-    // Check if source language is available
-    if (!getLanguageByCode(preferences.sourceLanguage)) {
-      issues.push(`Source language '${preferences.sourceLanguage}' is not available`);
-    }
-
-    // Check if target languages are available
-    preferences.targetLanguages.forEach(langCode => {
-      if (!getLanguageByCode(langCode)) {
-        issues.push(`Target language '${langCode}' is not available`);
-      }
-    });
-
-    // Check if preferred voices are available
-    Object.entries(preferences.preferredVoice).forEach(([langCode, voiceId]) => {
-      const voice = getVoiceById(voiceId);
-      if (!voice) {
-        issues.push(`Preferred voice '${voiceId}' for language '${langCode}' is not available`);
-      } else if (voice.language !== langCode) {
-        issues.push(`Voice '${voiceId}' does not match language '${langCode}'`);
-      }
-    });
-
-    return issues;
-  }, [preferences, getLanguageByCode, getVoiceById]);
 
   return {
     preferences,
@@ -291,8 +263,6 @@ export const useLanguagePreferences = (
     setVoiceForLanguage,
     getLanguageByCode,
     getVoiceById,
-    getPreferredVoiceForLanguage,
-    getDefaultVoiceForLanguage,
-    validatePreferences
+    getPreferredVoiceForLanguage
   };
 };

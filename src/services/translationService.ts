@@ -15,6 +15,8 @@ export interface TranslationService {
 }
 
 // Production Translation Service connecting to backend MT service
+// TODO: Uncomment for Phase 2 when translation is needed
+/*
 class ProductionTranslationService implements TranslationService {
   private ws: WebSocket | null = null
   private pendingRequests = new Map<string, { resolve: Function, reject: Function }>()
@@ -245,21 +247,56 @@ class ProductionTranslationService implements TranslationService {
     this.pendingRequests.clear()
   }
 }
+*/
 
-// Note: MockTranslationService is available but not currently used
-// Fallback mock service for development/testing when needed
+// Mock Translation Service for Phase 1 (no actual translation needed)
+class MockTranslationService implements TranslationService {
+  private supportedLanguages = [
+    'en-US', 'es-ES', 'fr-FR', 'de-DE', 'it-IT', 'pt-PT', 
+    'ar-SA', 'zh-CN', 'ja-JP', 'ko-KR', 'hi-IN', 'ru-RU',
+    'nl-NL', 'sv-SE', 'pl-PL', 'tr-TR'
+  ]
 
-// Create global service instance - use production service by default
-const productionService = new ProductionTranslationService()
+  async translate(text: string, fromLang: string, _toLang: string): Promise<TranslationResult> {
+    // Mock translation - just return the original text with mock data
+    return {
+      text: `[Mock Translation] ${text}`,
+      confidence: 0.95,
+      detectedSourceLang: fromLang,
+      processing_time_ms: 50
+    }
+  }
 
-// Auto-connect when module loads (with fallback to mock if fails)
-productionService.connect().catch(error => {
-  console.warn('⚠️ Failed to connect to production MT service on startup:', error)
-  console.log('🔄 Continuing with fallback mock translation for development')
-})
+  async detectLanguage(_text: string): Promise<string> {
+    // Mock language detection - return English by default
+    return 'en-US'
+  }
+
+  getSupportedLanguages(): string[] {
+    return this.supportedLanguages
+  }
+
+  isConnected(): boolean {
+    // Mock service is always "connected"
+    return true
+  }
+
+  async connect(): Promise<void> {
+    // Mock connection - always succeeds
+    console.log('🔧 Mock translation service connected (Phase 1)')
+  }
+
+  disconnect(): void {
+    // Mock disconnect - no action needed
+    console.log('🔧 Mock translation service disconnected')
+  }
+}
+
+// Create global service instance - use mock service for Phase 1 (no translation needed)
+const mockService = new MockTranslationService()
 
 // Export the service instance
-export const translationService: TranslationService = productionService
+export const translationService: TranslationService = mockService
 
-// For testing/development fallback: 
-// export const translationService: TranslationService = new MockTranslationService()
+// For Phase 2+ when translation is needed, switch to:
+// export const translationService: TranslationService = new ProductionTranslationService()

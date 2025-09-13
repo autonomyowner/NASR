@@ -3,7 +3,9 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Home from './components/Home'
 import OfferForYou from './components/OfferForYou'
-import Call from './components/Call'
+import EnhancedCall from './components/EnhancedCall'
+import SimpleCall from './components/SimpleCall'
+import Roadmap from './components/Roadmap'
 import Footer from './components/Footer'
 
 function App() {
@@ -14,7 +16,11 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/offer-for-you" element={<OfferForYou />} />
-          <Route path="/call" element={<Call />} />
+          <Route path="/call" element={<EnhancedCall />} />
+          <Route path="/room/:roomId" element={<EnhancedCall />} />
+          <Route path="/simple-call" element={<SimpleCall />} />
+          <Route path="/simple-room/:roomId" element={<SimpleCall />} />
+          <Route path="/roadmap" element={<Roadmap />} />
         </Routes>
         <Footer />
       </div>

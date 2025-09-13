@@ -10,7 +10,7 @@ export interface AppConfig {
 }
 
 export const getConfig = (): AppConfig => {
-  const signalingUrl = import.meta.env.VITE_SIGNALING_URL || 'http://localhost:3001';
+  const signalingUrl = import.meta.env.VITE_SIGNALING_URL || 'http://localhost:3002';
   
   let iceServers: ICEServer[] = [
     { urls: 'stun:stun.l.google.com:19302' },

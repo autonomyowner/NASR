@@ -41,7 +41,7 @@ const TranslationSettingsPanel: React.FC<TranslationSettingsPanelProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'general' | 'voices' | 'participants' | 'advanced'>('general');
   const [previewingVoice, setPreviewingVoice] = useState<string | null>(null);
-  const [unsavedChanges, setUnsavedChanges] = useState(false);
+  const [unsavedChanges] = useState(false);
 
   // Voice preview functionality
   const handleVoicePreview = useCallback(async (voiceId: string) => {

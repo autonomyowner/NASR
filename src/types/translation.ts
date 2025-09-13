@@ -228,4 +228,10 @@ export interface UseLanguagePreferencesReturn {
   updatePreference: (updates: Partial<TranslationPreference>) => void;
   getVoicesForLanguage: (languageCode: string) => Voice[];
   resetToDefaults: () => void;
+  addTargetLanguage: (languageCode: string) => void;
+  removeTargetLanguage: (languageCode: string) => void;
+  setVoiceForLanguage: (languageCode: string, voiceId: string) => void;
+  getLanguageByCode: (code: string) => Language | undefined;
+  getVoiceById: (id: string) => Voice | undefined;
+  getPreferredVoiceForLanguage: (languageCode: string) => Voice | undefined;
 }
