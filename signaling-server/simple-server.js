@@ -8,14 +8,26 @@ const server = http.createServer(app)
 
 // CORS configuration
 app.use(cors({
-  origin: [process.env.FRONTEND_URL || "http://localhost:5173", "http://localhost:5174", "http://localhost:5175"],
+  origin: [
+    process.env.FRONTEND_URL || "http://localhost:5173", 
+    "http://localhost:5174", 
+    "http://localhost:5175",
+    "https://travoice1.vercel.app",
+    "https://*.vercel.app"
+  ],
   credentials: true
 }))
 
 // Socket.IO configuration
 const io = socketIo(server, {
   cors: {
-    origin: [process.env.FRONTEND_URL || "http://localhost:5173", "http://localhost:5174", "http://localhost:5175"],
+    origin: [
+      process.env.FRONTEND_URL || "http://localhost:5173", 
+      "http://localhost:5174", 
+      "http://localhost:5175",
+      "https://travoice1.vercel.app",
+      "https://*.vercel.app"
+    ],
     methods: ["GET", "POST"],
     credentials: true
   },
