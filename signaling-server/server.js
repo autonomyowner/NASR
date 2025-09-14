@@ -49,11 +49,16 @@ const io = new Server(server, {
 const connectedUsers = new Map()
 const userSockets = new Map()
 
+// Store rooms and participants
+const rooms = new Map()
+const roomParticipants = new Map() // roomId -> Set of participant IDs
+
 app.get('/', (req, res) => {
   res.json({
     message: 'Travoice Signaling Server',
     version: '1.0.0',
     connectedUsers: connectedUsers.size,
+    activeRooms: rooms.size,
     uptime: process.uptime()
   })
 })
@@ -176,12 +181,190 @@ io.on('connection', (socket) => {
     }
   })
 
+  // Room management handlers
+  socket.on('create-room', ({ name, sourceLanguage, targetLanguage, maxParticipants, isPublic, participantName }) => {
+    console.log(`Creating room: ${name} by ${participantName}`)
+    
+    const roomId = `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    const user = connectedUsers.get(socket.id)
+    
+    if (!user) {
+      socket.emit('room-error', { error: 'User not found' })
+      return
+    }
+
+    const room = {
+      id: roomId,
+      name: name,
+      participants: [],
+      languageSettings: {
+        sourceLanguage: sourceLanguage,
+        targetLanguage: targetLanguage
+      },
+      createdAt: new Date(),
+      isActive: true,
+      hostId: user.peerId,
+      shareableLink: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/room/${roomId}`,
+      maxParticipants: maxParticipants || 10,
+      isPublic: isPublic || false
+    }
+
+    const participant = {
+      id: user.peerId,
+      name: participantName,
+      isHost: true,
+      isConnected: true,
+      language: sourceLanguage,
+      joinedAt: new Date(),
+      peerId: user.peerId
+    }
+
+    room.participants.push(participant)
+    rooms.set(roomId, room)
+    roomParticipants.set(roomId, new Set([user.peerId]))
+
+    // Join the room
+    socket.join(roomId)
+    
+    // Send room created event
+    socket.emit('room-created', room)
+    console.log(`Room created: ${roomId} with ${room.participants.length} participants`)
+  })
+
+  socket.on('join-room', ({ roomId, participantName }) => {
+    console.log(`Joining room: ${roomId} by ${participantName}`)
+    
+    const room = rooms.get(roomId)
+    const user = connectedUsers.get(socket.id)
+    
+    if (!room) {
+      socket.emit('room-error', { error: 'Room not found' })
+      return
+    }
+
+    if (!user) {
+      socket.emit('room-error', { error: 'User not found' })
+      return
+    }
+
+    // Check if room is full
+    if (room.participants.length >= room.maxParticipants) {
+      socket.emit('room-error', { error: 'Room is full' })
+      return
+    }
+
+    // Check if user is already in the room
+    const existingParticipant = room.participants.find(p => p.id === user.peerId)
+    if (existingParticipant) {
+      socket.emit('room-error', { error: 'Already in this room' })
+      return
+    }
+
+    const participant = {
+      id: user.peerId,
+      name: participantName,
+      isHost: false,
+      isConnected: true,
+      language: room.languageSettings.sourceLanguage,
+      joinedAt: new Date(),
+      peerId: user.peerId
+    }
+
+    room.participants.push(participant)
+    roomParticipants.get(roomId).add(user.peerId)
+
+    // Join the room
+    socket.join(roomId)
+    
+    // Notify all participants in the room
+    io.to(roomId).emit('participant-joined', participant)
+    
+    // Send room joined event to the new participant
+    socket.emit('room-joined', { room, participant })
+    console.log(`User ${participantName} joined room: ${roomId}`)
+  })
+
+  socket.on('leave-room', ({ roomId }) => {
+    console.log(`Leaving room: ${roomId}`)
+    
+    const room = rooms.get(roomId)
+    const user = connectedUsers.get(socket.id)
+    
+    if (!room || !user) {
+      return
+    }
+
+    const participant = room.participants.find(p => p.id === user.peerId)
+    if (!participant) {
+      return
+    }
+
+    // Remove participant from room
+    room.participants = room.participants.filter(p => p.id !== user.peerId)
+    roomParticipants.get(roomId)?.delete(user.peerId)
+
+    // Leave the room
+    socket.leave(roomId)
+    
+    // Notify other participants
+    io.to(roomId).emit('participant-left', user.peerId)
+    
+    // If no participants left, delete the room
+    if (room.participants.length === 0) {
+      rooms.delete(roomId)
+      roomParticipants.delete(roomId)
+      console.log(`Room ${roomId} deleted (no participants)`)
+    } else {
+      // If host left, assign new host
+      if (participant.isHost && room.participants.length > 0) {
+        room.participants[0].isHost = true
+        room.hostId = room.participants[0].id
+        io.to(roomId).emit('room-updated', room)
+      }
+    }
+    
+    // Send room left event
+    socket.emit('room-left')
+    console.log(`User left room: ${roomId}`)
+  })
+
   // Handle disconnect
   socket.on('disconnect', () => {
     console.log(`User disconnected: ${socket.id}`)
     
     const user = connectedUsers.get(socket.id)
     if (user) {
+      // Remove from all rooms
+      for (const [roomId, participants] of roomParticipants.entries()) {
+        if (participants.has(user.peerId)) {
+          const room = rooms.get(roomId)
+          if (room) {
+            const participant = room.participants.find(p => p.id === user.peerId)
+            if (participant) {
+              room.participants = room.participants.filter(p => p.id !== user.peerId)
+              participants.delete(user.peerId)
+              
+              // Notify other participants
+              io.to(roomId).emit('participant-left', user.peerId)
+              
+              // If no participants left, delete the room
+              if (room.participants.length === 0) {
+                rooms.delete(roomId)
+                roomParticipants.delete(roomId)
+                console.log(`Room ${roomId} deleted (no participants)`)
+              } else {
+                // If host left, assign new host
+                if (participant.isHost && room.participants.length > 0) {
+                  room.participants[0].isHost = true
+                  room.hostId = room.participants[0].id
+                  io.to(roomId).emit('room-updated', room)
+                }
+              }
+            }
+          }
+        }
+      }
+      
       userSockets.delete(user.peerId)
       connectedUsers.delete(socket.id)
       

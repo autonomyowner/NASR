@@ -39,6 +39,7 @@ const EnhancedRoomManager: React.FC<EnhancedRoomManagerProps> = ({
   useEffect(() => {
     // Set up room service callbacks
     roomService.onRoomCreated = (room: Room) => {
+      console.log('🎉 Room created callback received:', room)
       setCreatedRoom(room)
       setIsConnecting(false)
       notifications.success('Room Created!', `Room "${room.name}" is ready. Share the link with others.`)
@@ -56,6 +57,7 @@ const EnhancedRoomManager: React.FC<EnhancedRoomManagerProps> = ({
     }
 
     roomService.onRoomError = (error: string) => {
+      console.error('❌ Room error callback received:', error)
       setIsConnecting(false)
       notifications.error('Room Error', error)
     }
@@ -89,6 +91,7 @@ const EnhancedRoomManager: React.FC<EnhancedRoomManagerProps> = ({
       return
     }
 
+    console.log('🚀 Starting room creation process...')
     setIsConnecting(true)
     
     const settings: RoomSettings = {
@@ -99,6 +102,9 @@ const EnhancedRoomManager: React.FC<EnhancedRoomManagerProps> = ({
       isPublic: false
     }
 
+    console.log('📋 Room settings:', settings)
+    console.log('👤 Participant name:', participantName.trim())
+    
     roomService.createRoom(settings, participantName.trim())
   }
 

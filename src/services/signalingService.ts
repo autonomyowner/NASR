@@ -40,6 +40,9 @@ export class SignalingService {
 
         this.socket.on('connect_error', (error) => {
           console.error('Signaling server connection error:', error)
+          if (this.onConnectionStatus) {
+            this.onConnectionStatus(false)
+          }
           reject(error)
         })
 

@@ -13,9 +13,12 @@ app.use(cors({
     "http://localhost:5174", 
     "http://localhost:5175",
     "https://travoice1.vercel.app",
-    "https://*.vercel.app"
+    "https://*.vercel.app",
+    "https://travoice1.vercel.app"
   ],
-  credentials: true
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }))
 
 // Socket.IO configuration
@@ -26,12 +29,15 @@ const io = socketIo(server, {
       "http://localhost:5174", 
       "http://localhost:5175",
       "https://travoice1.vercel.app",
-      "https://*.vercel.app"
+      "https://*.vercel.app",
+      "https://travoice1.vercel.app"
     ],
-    methods: ["GET", "POST"],
-    credentials: true
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"]
   },
-  transports: ['websocket', 'polling']
+  transports: ['websocket', 'polling'],
+  allowEIO3: true
 })
 
 // Store active rooms and participants

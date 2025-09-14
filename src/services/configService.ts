@@ -10,7 +10,10 @@ export interface AppConfig {
 }
 
 export const getConfig = (): AppConfig => {
-  const signalingUrl = import.meta.env.VITE_SIGNALING_URL || 'http://localhost:3002';
+  // Try multiple signaling server URLs for fallback
+  const signalingUrl = import.meta.env.VITE_SIGNALING_URL || 
+                      import.meta.env.VITE_SIGNALING_SERVER_URL || 
+                      'https://nasr-production-0c99.up.railway.app';
   
   let iceServers: ICEServer[] = [
     { urls: 'stun:stun.l.google.com:19302' },

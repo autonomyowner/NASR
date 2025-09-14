@@ -15,8 +15,6 @@ export interface TranslationService {
 }
 
 // Production Translation Service connecting to backend MT service
-// TODO: Uncomment for Phase 2 when translation is needed
-/*
 class ProductionTranslationService implements TranslationService {
   private ws: WebSocket | null = null
   private pendingRequests = new Map<string, { resolve: Function, reject: Function }>()
@@ -247,7 +245,6 @@ class ProductionTranslationService implements TranslationService {
     this.pendingRequests.clear()
   }
 }
-*/
 
 // Mock Translation Service for Phase 1 (no actual translation needed)
 class MockTranslationService implements TranslationService {
@@ -292,11 +289,8 @@ class MockTranslationService implements TranslationService {
   }
 }
 
-// Create global service instance - use mock service for Phase 1 (no translation needed)
-const mockService = new MockTranslationService()
+// Create global service instance - use production service for real translations
+const productionService = new ProductionTranslationService()
 
 // Export the service instance
-export const translationService: TranslationService = mockService
-
-// For Phase 2+ when translation is needed, switch to:
-// export const translationService: TranslationService = new ProductionTranslationService()
+export const translationService: TranslationService = productionService

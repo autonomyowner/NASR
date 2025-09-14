@@ -28,200 +28,146 @@ const Roadmap: React.FC = () => {
   const [viewMode, setViewMode] = useState<'phases' | 'timeline' | 'categories'>('phases')
 
   const enhancements: Enhancement[] = [
-    // Phase 1: Core Functionality
+    // Phase 1: Website & Call Functionality (Month 1)
     {
-      id: 'room-persistence',
-      title: 'Room Persistence & Database Integration',
-      description: 'Store rooms in database with 24-48 hour persistence and recovery features',
+      id: 'website-optimization',
+      title: 'Website Performance & UI Polish',
+      description: 'Optimize website performance, improve UI/UX, and ensure smooth call experience',
       priority: 'high',
       phase: 1,
-      category: 'Backend',
-      features: ['MongoDB/PostgreSQL integration', 'Room history tracking', 'Automatic recovery', 'Analytics dashboard'],
-      estimatedTime: '4-6 weeks',
-      status: 'planned',
-      icon: '🗄️'
+      category: 'Frontend',
+      features: ['Performance optimization', 'UI/UX improvements', 'Mobile responsiveness', 'Call quality optimization'],
+      estimatedTime: '2-3 weeks',
+      status: 'in-progress',
+      icon: '🌐'
     },
     {
-      id: 'advanced-room-management',
-      title: 'Advanced Room Management',
-      description: 'Password protection, moderation tools, and room templates',
+      id: 'call-stability',
+      title: 'Call Stability & Quality',
+      description: 'Enhance call reliability, audio quality, and connection stability',
       priority: 'high',
       phase: 1,
       category: 'Features',
-      features: ['Password protection', 'Host controls', 'Room templates', 'Scheduling system'],
-      estimatedTime: '3-4 weeks',
-      status: 'planned',
+      features: ['Connection stability', 'Audio quality improvements', 'Error handling', 'Network optimization'],
+      estimatedTime: '2-3 weeks',
+      status: 'in-progress',
+      icon: '📞'
+    },
+    {
+      id: 'basic-room-management',
+      title: 'Basic Room Management',
+      description: 'Essential room features for smooth communication experience',
+      priority: 'high',
+      phase: 1,
+      category: 'Features',
+      features: ['Room creation', 'Join/leave functionality', 'Basic controls', 'User presence'],
+      estimatedTime: '1-2 weeks',
+      status: 'in-progress',
       icon: '🏠'
     },
-    {
-      id: 'participant-management',
-      title: 'Enhanced Participant Management',
-      description: 'User profiles, roles, waiting rooms, and status indicators',
-      priority: 'high',
-      phase: 1,
-      category: 'Features',
-      features: ['User profiles', 'Role-based permissions', 'Waiting room', 'Status indicators'],
-      estimatedTime: '3-5 weeks',
-      status: 'planned',
-      icon: '👥'
-    },
 
-    // Phase 2: User Experience
+    // Phase 2: API Integration & Real-time Translation (Month 2)
     {
-      id: 'advanced-ui',
-      title: 'Advanced UI/UX Features',
-      description: 'Themes, customizable layouts, keyboard shortcuts, and voice commands',
-      priority: 'medium',
-      phase: 2,
-      category: 'UI/UX',
-      features: ['Dark/Light themes', 'Customizable layouts', 'Keyboard shortcuts', 'Voice commands'],
-      estimatedTime: '4-6 weeks',
-      status: 'planned',
-      icon: '🎨'
-    },
-    {
-      id: 'enhanced-calls',
-      title: 'Enhanced Call Features',
-      description: 'Video calls, screen sharing, recording, and transcription',
+      id: 'api-integration',
+      title: 'API Integration & Backend Services',
+      description: 'Integrate translation APIs and build robust backend services',
       priority: 'high',
       phase: 2,
-      category: 'Features',
-      features: ['Video calls', 'Screen sharing', 'Call recording', 'Real-time transcription'],
-      estimatedTime: '6-8 weeks',
+      category: 'Backend',
+      features: ['Translation API integration', 'Backend service architecture', 'Database setup', 'API endpoints'],
+      estimatedTime: '3-4 weeks',
       status: 'planned',
-      icon: '📹'
+      icon: '🔌'
     },
     {
-      id: 'advanced-translation',
-      title: 'Advanced Translation Features',
-      description: 'Multi-language support, history, accuracy scores, and custom models',
-      priority: 'medium',
+      id: 'real-time-translation',
+      title: 'Real-time Translation Engine',
+      description: 'Implement live translation during calls with multiple language support',
+      priority: 'high',
       phase: 2,
       category: 'AI/ML',
-      features: ['Multi-language rooms', 'Translation history', 'Accuracy scores', 'Custom models'],
-      estimatedTime: '5-7 weeks',
+      features: ['Live speech translation', 'Multi-language support', 'Translation accuracy', 'Real-time processing'],
+      estimatedTime: '3-4 weeks',
       status: 'planned',
       icon: '🌐'
     },
-
-    // Phase 3: Security & Privacy
     {
-      id: 'security-enhancements',
-      title: 'Security Enhancements',
-      description: 'End-to-end encryption, authentication, and access control',
+      id: 'translation-ui',
+      title: 'Translation User Interface',
+      description: 'Build intuitive UI for translation controls and language selection',
+      priority: 'medium',
+      phase: 2,
+      category: 'UI/UX',
+      features: ['Language selector', 'Translation controls', 'Visual indicators', 'Settings panel'],
+      estimatedTime: '2-3 weeks',
+      status: 'planned',
+      icon: '🎨'
+    },
+
+    // Phase 3: Mobile App Development (Months 2-3)
+    {
+      id: 'mobile-app-core',
+      title: 'Mobile App Core Features',
+      description: 'Develop core mobile app functionality with call and translation features',
       priority: 'high',
       phase: 3,
-      category: 'Security',
-      features: ['E2E encryption', 'OAuth/SSO', 'Access control', 'Audit logging'],
-      estimatedTime: '4-6 weeks',
-      status: 'planned',
-      icon: '🔒'
-    },
-    {
-      id: 'privacy-features',
-      title: 'Privacy Features',
-      description: 'GDPR compliance, data retention, and privacy controls',
-      priority: 'medium',
-      phase: 3,
-      category: 'Privacy',
-      features: ['GDPR compliance', 'Data retention', 'Anonymous mode', 'Privacy dashboard'],
-      estimatedTime: '3-4 weeks',
-      status: 'planned',
-      icon: '🛡️'
-    },
-
-    // Phase 4: Platform Expansion
-    {
-      id: 'mobile-apps',
-      title: 'Mobile Applications',
-      description: 'React Native apps for iOS and Android with PWA support',
-      priority: 'medium',
-      phase: 4,
       category: 'Mobile',
-      features: ['React Native apps', 'PWA support', 'Push notifications', 'Touch optimizations'],
-      estimatedTime: '8-12 weeks',
+      features: ['Mobile call interface', 'Translation integration', 'Push notifications', 'Offline capabilities'],
+      estimatedTime: '4-6 weeks',
       status: 'planned',
       icon: '📱'
     },
     {
-      id: 'integrations',
-      title: 'Integration Ecosystem',
-      description: 'Calendar integration, bots, APIs, and webhooks',
-      priority: 'low',
-      phase: 4,
-      category: 'Integrations',
-      features: ['Calendar integration', 'Slack/Discord bots', 'API webhooks', 'Zapier integration'],
-      estimatedTime: '6-8 weeks',
-      status: 'planned',
-      icon: '🔗'
-    },
-
-    // Phase 5: AI & Automation
-    {
-      id: 'ai-features',
-      title: 'AI-Powered Features',
-      description: 'Smart suggestions, automatic translation, and sentiment analysis',
-      priority: 'low',
-      phase: 5,
-      category: 'AI/ML',
-      features: ['Smart room suggestions', 'Auto translation', 'Sentiment analysis', 'Meeting summaries'],
-      estimatedTime: '8-10 weeks',
-      status: 'planned',
-      icon: '🤖'
-    },
-    {
-      id: 'automation',
-      title: 'Automation Features',
-      description: 'Auto-join rules, smart scheduling, and content moderation',
-      priority: 'low',
-      phase: 5,
-      category: 'Automation',
-      features: ['Auto-join rules', 'Smart scheduling', 'Auto-transcription', 'Content moderation'],
-      estimatedTime: '6-8 weeks',
+      id: 'mobile-optimization',
+      title: 'Mobile App Optimization',
+      description: 'Optimize mobile app performance and user experience',
+      priority: 'medium',
+      phase: 3,
+      category: 'Mobile',
+      features: ['Performance optimization', 'Touch interactions', 'Battery optimization', 'App store preparation'],
+      estimatedTime: '2-3 weeks',
       status: 'planned',
       icon: '⚡'
+    },
+    {
+      id: 'cross-platform-sync',
+      title: 'Cross-Platform Synchronization',
+      description: 'Ensure seamless experience between web and mobile platforms',
+      priority: 'medium',
+      phase: 3,
+      category: 'Backend',
+      features: ['Account synchronization', 'Call history sync', 'Settings sync', 'Real-time updates'],
+      estimatedTime: '2-3 weeks',
+      status: 'planned',
+      icon: '🔄'
     }
   ]
 
   const phases: Phase[] = [
     {
       id: 1,
-      title: 'Core Functionality',
-      description: 'Essential features for a robust communication platform',
+      title: 'Website & Call Foundation',
+      description: 'Month 1: Optimize website performance and ensure stable call functionality',
       color: 'from-red-500 to-pink-500',
       enhancements: enhancements.filter(e => e.phase === 1)
     },
     {
       id: 2,
-      title: 'User Experience',
-      description: 'Enhanced UI/UX and advanced call features',
+      title: 'API Integration & Translation',
+      description: 'Month 2: Integrate translation APIs and build real-time translation engine',
       color: 'from-blue-500 to-cyan-500',
       enhancements: enhancements.filter(e => e.phase === 2)
     },
     {
       id: 3,
-      title: 'Security & Privacy',
-      description: 'Enterprise-grade security and privacy features',
+      title: 'Mobile App Development',
+      description: 'Months 2-3: Develop and optimize mobile applications with full feature parity',
       color: 'from-green-500 to-emerald-500',
       enhancements: enhancements.filter(e => e.phase === 3)
-    },
-    {
-      id: 4,
-      title: 'Platform Expansion',
-      description: 'Mobile apps and third-party integrations',
-      color: 'from-purple-500 to-violet-500',
-      enhancements: enhancements.filter(e => e.phase === 4)
-    },
-    {
-      id: 5,
-      title: 'AI & Automation',
-      description: 'Intelligent features and automation',
-      color: 'from-orange-500 to-yellow-500',
-      enhancements: enhancements.filter(e => e.phase === 5)
     }
   ]
 
-  const categories = ['all', 'Backend', 'Features', 'UI/UX', 'Security', 'Privacy', 'Mobile', 'Integrations', 'AI/ML', 'Automation']
+  const categories = ['all', 'Frontend', 'Backend', 'Features', 'UI/UX', 'Mobile', 'AI/ML']
 
   const filteredEnhancements = enhancements.filter(enhancement => {
     const matchesSearch = enhancement.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -459,7 +405,7 @@ const Roadmap: React.FC = () => {
                         <h4 className="text-lg font-semibold text-white">{phase.title}</h4>
                         <p className="text-gray-300 text-sm">{phase.description}</p>
                         <div className="text-xs text-gray-400 mt-1">
-                          {phase.enhancements.length} enhancements • Estimated: {phase.id * 2}-{phase.id * 3} months
+                          {phase.enhancements.length} enhancements • {phase.id === 1 ? 'Month 1' : phase.id === 2 ? 'Month 2' : 'Months 2-3'}
                         </div>
                       </div>
                     </motion.div>
@@ -560,9 +506,14 @@ const Roadmap: React.FC = () => {
                 <div className="text-gray-300 text-sm">Feature Categories</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-cyan-400 mb-2">12-18</div>
-                <div className="text-gray-300 text-sm">Months Timeline</div>
+                <div className="text-3xl font-bold text-cyan-400 mb-2">~3</div>
+                <div className="text-gray-300 text-sm">Months Timeline*</div>
               </div>
+            </div>
+            <div className="mt-6 text-center">
+              <p className="text-gray-400 text-sm">
+                *Timeline is approximate and may vary based on development pace. 3 months could represent 1 month of dedicated work time.
+              </p>
             </div>
           </motion.div>
         </div>

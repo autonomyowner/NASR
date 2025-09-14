@@ -30,19 +30,31 @@ from transformers import MarianMTModel, MarianTokenizer, pipeline
 import torch
 import re
 
-# Import model optimization
-from model_optimizer import ModelOptimizer, OptimizedTranslationEngine
+# Import model optimization (optional)
+try:
+    from model_optimizer import ModelOptimizer, OptimizedTranslationEngine
+    OPTIMIZATION_AVAILABLE = True
+except ImportError:
+    OPTIMIZATION_AVAILABLE = False
 
-# Monitoring imports
-from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
-import psutil
-import threading
+# Monitoring imports (optional)
+try:
+    from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
+    import psutil
+    import threading
+    MONITORING_AVAILABLE = True
+except ImportError:
+    MONITORING_AVAILABLE = False
 
-# Quality assessment imports
-from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
-import nltk
-from collections import defaultdict
+# Quality assessment imports (optional)
+try:
+    from sentence_transformers import SentenceTransformer
+    from sklearn.metrics.pairwise import cosine_similarity
+    import nltk
+    from collections import defaultdict
+    QUALITY_AVAILABLE = True
+except ImportError:
+    QUALITY_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -277,7 +289,8 @@ class QualityAssessment:
         self.sentence_model = None  # Load on demand
         self.repetition_cache = defaultdict(list)
         self.quality_history = []
-        self._load_nltk_data()
+        if QUALITY_AVAILABLE:
+            self._load_nltk_data()
         
     def _load_nltk_data(self):
         """Load required NLTK data"""
@@ -540,7 +553,8 @@ class PerformanceMonitor:
     def __init__(self):
         self.translation_times: List[float] = []
         self.confidence_scores: List[float] = []
-        self.start_monitoring()
+        if MONITORING_AVAILABLE:
+            self.start_monitoring()
         
     def start_monitoring(self):
         """Start background monitoring thread"""
@@ -679,7 +693,7 @@ class TranslationEngine:
         self.use_optimization = use_optimization
         
         # Initialize optimizer if enabled
-        if use_optimization:
+        if use_optimization and OPTIMIZATION_AVAILABLE:
             try:
                 self.optimizer = ModelOptimizer()
                 self.optimized_engine = OptimizedTranslationEngine(self.optimizer)
@@ -902,8 +916,8 @@ class MTService:
         self.engine = TranslationEngine()
         self.context_manager = RollingContextManager()
         self.glossary = GlossaryManager()
-        self.performance_monitor = PerformanceMonitor()
-        self.quality_assessment = QualityAssessment()
+        self.performance_monitor = PerformanceMonitor() if MONITORING_AVAILABLE else None
+        self.quality_assessment = QualityAssessment() if QUALITY_AVAILABLE else None
         self.incremental_manager = IncrementalTranslationManager()
         
     async def translate_with_context(
@@ -952,17 +966,17 @@ class MTService:
                 context if context else None
             )
             
-            # Calculate advanced confidence score
-            enhanced_confidence = self.quality_assessment.calculate_confidence(
-                request.text,
-                result.text,
-                request.source_language,
-                request.target_language,
-                context
-            )
-            
-            # Update result with enhanced confidence
-            result.confidence = enhanced_confidence
+            # Calculate advanced confidence score (if available)
+            if self.quality_assessment:
+                enhanced_confidence = self.quality_assessment.calculate_confidence(
+                    request.text,
+                    result.text,
+                    request.source_language,
+                    request.target_language,
+                    context
+                )
+                # Update result with enhanced confidence
+                result.confidence = enhanced_confidence
             
             # Handle incremental extraction
             if request.is_partial:
@@ -985,15 +999,16 @@ class MTService:
                 result.text
             )
             
-            # Record performance metrics
-            duration = time.time() - start_time
-            self.performance_monitor.record_translation(
-                duration,
-                result.confidence,
-                request.source_language,
-                request.target_language,
-                result.model_used
-            )
+            # Record performance metrics (if available)
+            if self.performance_monitor:
+                duration = time.time() - start_time
+                self.performance_monitor.record_translation(
+                    duration,
+                    result.confidence,
+                    request.source_language,
+                    request.target_language,
+                    result.model_used
+                )
             
             # Update context buffer size metric
             context_tokens = self.context_manager._count_tokens(request.session_id)
@@ -1111,7 +1126,10 @@ async def health_check():
     return {
         "status": "healthy",
         "supported_pairs": mt_service.engine.get_supported_pairs(),
-        "active_sessions": len(mt_service.context_manager.contexts)
+        "active_sessions": len(mt_service.context_manager.contexts),
+        "optimization_available": OPTIMIZATION_AVAILABLE,
+        "monitoring_available": MONITORING_AVAILABLE,
+        "quality_available": QUALITY_AVAILABLE
     }
 
 @app.get("/languages") 
@@ -1140,18 +1158,25 @@ async def get_prometheus_metrics():
 @app.get("/performance")
 async def get_performance_stats():
     """Get detailed performance statistics"""
-    stats = mt_service.performance_monitor.get_statistics()
-    
-    # Add system info
-    memory = psutil.virtual_memory()
+    stats = {}
+
+    if mt_service.performance_monitor:
+        stats.update(mt_service.performance_monitor.get_statistics())
+
+    # Add system info (if available)
+    if MONITORING_AVAILABLE:
+        memory = psutil.virtual_memory()
+        stats.update({
+            "system": {
+                "memory_percent": memory.percent,
+                "memory_available_gb": memory.available / (1024**3),
+                "memory_used_gb": memory.used / (1024**3),
+                "cpu_percent": psutil.cpu_percent(interval=1),
+                "load_average": psutil.getloadavg() if hasattr(psutil, 'getloadavg') else None
+            }
+        })
+
     stats.update({
-        "system": {
-            "memory_percent": memory.percent,
-            "memory_available_gb": memory.available / (1024**3),
-            "memory_used_gb": memory.used / (1024**3),
-            "cpu_percent": psutil.cpu_percent(interval=1),
-            "load_average": psutil.getloadavg() if hasattr(psutil, 'getloadavg') else None
-        },
         "models": {
             "loaded_pairs": len(mt_service.engine.models),
             "supported_pairs": len(mt_service.engine.get_supported_pairs()),
@@ -1159,10 +1184,12 @@ async def get_performance_stats():
             "gpu_available": torch.cuda.is_available(),
             "gpu_memory_gb": torch.cuda.memory_allocated() / (1024**3) if torch.cuda.is_available() else 0
         },
-        "active_sessions": len(mt_service.context_manager.contexts),
-        "quality_assessment": mt_service.quality_assessment.get_quality_statistics()
+        "active_sessions": len(mt_service.context_manager.contexts)
     })
-    
+
+    if mt_service.quality_assessment:
+        stats["quality_assessment"] = mt_service.quality_assessment.get_quality_statistics()
+
     return stats
 
 @app.get("/benchmark/{source_lang}/{target_lang}")

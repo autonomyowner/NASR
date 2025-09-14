@@ -233,7 +233,7 @@ const SimpleCall = () => {
   const initializeSocket = useCallback(() => {
     if (socketRef.current) return
 
-    const serverUrl = import.meta.env.VITE_SIGNALING_SERVER_URL || 'http://localhost:3001'
+    const serverUrl = import.meta.env.VITE_SIGNALING_SERVER_URL || import.meta.env.VITE_SIGNALING_URL || 'http://localhost:3002'
     console.log('🔧 Connecting to signaling server:', serverUrl)
     
     const socket = io(serverUrl, {

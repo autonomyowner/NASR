@@ -60,10 +60,19 @@ export class RoomService {
       try {
         const config = getConfig()
         const url = serverUrl || config.signalingUrl
+        console.log('🔗 Room service connecting to:', url)
+        console.log('🔗 Current socket state:', { socket: !!this.socket, connected: this.socket?.connected })
+        
+        // Disconnect existing socket if any
+        if (this.socket) {
+          console.log('🔗 Disconnecting existing socket')
+          this.socket.disconnect()
+        }
+        
         this.socket = io(url)
         
         this.socket.on('connect', () => {
-          console.log('Connected to room signaling server')
+          console.log('✅ Connected to room signaling server')
           if (this.onConnectionStatus) {
             this.onConnectionStatus(true)
           }
@@ -78,16 +87,20 @@ export class RoomService {
         })
 
         this.socket.on('connect_error', (error) => {
-          console.error('Room signaling server connection error:', error)
+          console.error('❌ Room signaling server connection error:', error)
           reject(error)
         })
 
         // Room-based events
         this.socket.on('room-created', (room: Room) => {
-          console.log('Room created:', room)
+          console.log('🏠 Room created:', room)
+          console.log('🏠 onRoomCreated callback exists:', !!this.onRoomCreated)
           this.currentRoom = room
           if (this.onRoomCreated) {
+            console.log('🏠 Calling onRoomCreated callback')
             this.onRoomCreated(room)
+          } else {
+            console.error('❌ onRoomCreated callback is null!')
           }
         })
 
@@ -179,11 +192,20 @@ export class RoomService {
 
   // Room management methods
   createRoom(settings: RoomSettings, participantName: string): void {
+    console.log('🚀 createRoom called with:', { settings, participantName })
+    console.log('🚀 Socket exists:', !!this.socket)
+    console.log('🚀 Socket connected:', this.socket?.connected)
+    
     if (this.socket?.connected) {
+      console.log('🚀 Creating room with settings:', settings, 'participant:', participantName)
       this.socket.emit('create-room', {
         ...settings,
         participantName
       })
+      console.log('🚀 Room creation request sent to server')
+    } else {
+      console.error('❌ Cannot create room: socket not connected')
+      console.error('❌ Socket state:', { socket: !!this.socket, connected: this.socket?.connected })
     }
   }
 

@@ -7,7 +7,9 @@
     "start": "node simple-server.js",
     "dev": "nodemon simple-server.js",
     "simple": "node simple-server.js",
-    "simple:dev": "nodemon simple-server.js"
+    "simple:dev": "nodemon simple-server.js",
+    "build": "echo 'No build step required'",
+    "postinstall": "echo 'Dependencies installed successfully'"
   },
   "dependencies": {
     "express": "^4.18.2",
