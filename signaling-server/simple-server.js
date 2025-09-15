@@ -115,6 +115,59 @@ const leaveRoom = (socket) => {
 io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`)
 
+  // Handle room creation
+  socket.on('create-room', (data) => {
+    try {
+      console.log('🚀 Server received create-room request:', data)
+      
+      const { name, sourceLanguage, targetLanguage, maxParticipants, isPublic, participantName } = data
+      
+      // Generate room ID
+      const roomId = `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      
+      // Create room
+      const room = {
+        id: roomId,
+        name: name || `Room ${roomId}`,
+        participants: [],
+        languageSettings: {
+          sourceLanguage: sourceLanguage || 'en',
+          targetLanguage: targetLanguage || 'es'
+        },
+        createdAt: new Date(),
+        isActive: true,
+        hostId: socket.id,
+        maxParticipants: maxParticipants || 10,
+        isPublic: isPublic || false
+      }
+      
+      // Add creator as first participant
+      const participant = {
+        id: socket.id,
+        name: participantName || 'Anonymous',
+        isHost: true,
+        isConnected: true,
+        language: sourceLanguage || 'en',
+        joinedAt: new Date(),
+        peerId: socket.id
+      }
+      
+      room.participants.push(participant)
+      rooms.set(roomId, room)
+      
+      // Join the room
+      socket.join(roomId)
+      
+      // Send room created event
+      socket.emit('room-created', room)
+      console.log(`✅ Room created: ${roomId} by ${participantName}`)
+      
+    } catch (error) {
+      console.error('❌ Error creating room:', error)
+      socket.emit('room-error', { error: 'Failed to create room' })
+    }
+  })
+
   // Handle room joining
   socket.on('join-room', (data) => {
     try {
